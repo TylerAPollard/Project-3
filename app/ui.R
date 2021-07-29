@@ -28,10 +28,10 @@ shinyUI(
             bs4SidebarMenu(
                 bs4SidebarMenuItem(text = "Dashboard Home", tabName = "home", icon = icon("home")),
                 bs4SidebarMenuItem(text = "Data", tabName = "data", icon = icon("table")),
-                bs4SidebarMenuItem(text = "Data Exploration", tabName = "data.exploration", icon = icon("chart-area")),
-                bs4SidebarMenuItem(text = "Modeling", tabName = "modeling", icon = icon("chart-line"),
-                                   bs4SidebarMenuSubItem(text = "Modeling Info", tabName = "model.info"),
-                                   bs4SidebarMenuSubItem(text = "Model Fitting", tabName = "model.fit"),
+                bs4SidebarMenuItem(text = "Data Exploration", tabName = "data_exploration", icon = icon("chart-area")),
+                bs4SidebarMenuItem(text = "Modeling", icon = icon("chart-line"),
+                                   bs4SidebarMenuSubItem(text = "Modeling Info", tabName = "model_info"),
+                                   bs4SidebarMenuSubItem(text = "Model Fitting", tabName = "model_fit"),
                                    bs4SidebarMenuSubItem(text = "Prediction", tabName = "prediction")
                                    )
             ) # close bs4sidebarMenu
@@ -44,6 +44,8 @@ shinyUI(
                 # ========= Data Tab ===============
                 bs4TabItem(tabName = "data",
                            fluidPage(
+                               h1("Data"),
+                               hr(),
                                # Data Filter box
                                box(title = strong("Data Filters"), collapsible = TRUE, collapsed = FALSE, closable = FALSE, width =12, color = "warning", status ="warning", solidHeader = TRUE, elevation = 3,
                                    # Column Filter
@@ -102,7 +104,54 @@ shinyUI(
                                    )
                                ) # end data table box
                            ) # end fluidPage
-                ) # data tab
+                ), # data tab
+                # =========== Data Exploration Tab ==============
+                bs4TabItem(tabName = "data_exploration",
+                           fluidPage(
+                               h1("Data Exploration"),
+                               hr(),
+                               fluidRow(
+                                   column(width = 4,
+                                          box(title = strong("Summary Inputs"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
+                                              
+                                          )
+                                   ),
+                                   column(width = 8,
+                                          box(title = strong("Summaries"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
+                                              
+                                          )
+                                   )
+                               ),
+                               hr(),
+                               fluidRow(
+                                   column(width = 4,
+                                          box(title = strong("Visual Inputs"), width = 12, status = "gray-dark", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
+                                              
+                                          )
+                                   ),
+                                   column(width = 8,
+                                          box(title = strong("Visuals"), width = 12, status = "gray-dark", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
+                                              
+                                          )
+                                   )
+                               )
+                           )
+                ),
+                bs4TabItem(tabName = "model_info",
+                           fluidPage(
+                               h1("Modeling Info")
+                           )
+                ),
+                bs4TabItem(tabName = "model_fit",
+                           fluidPage(
+                               h1("Model Fit")
+                           )
+                ),
+                bs4TabItem(tabName = "prediction",
+                           fluidPage(
+                               h1("Prediction")
+                           )
+                )
             ) # end bs4Tabitems
         ) # end bs4DashBody
     ) # bs4dashPage

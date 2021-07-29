@@ -46,6 +46,12 @@ shinyServer(function(input, output, session) {
     game.df$stadium_id <- as.character(game.df$stadium_id)
     game.df$stadium <- as.character(game.df$stadium)
     game.df$div_game <- as_factor(game.df$div_game)
+    game.df$overtime <- as_factor(game.df$overtime)
+    levels(game.df$overtime) <- list("Yes" = 1, "No" = 0)
+    game.df$div_game <- as_factor(game.df$div_game)
+    levels(game.df$div_game) <- list("Yes" = 1, "No" = 0)
+    game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
+    game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
     
     # Column Filter UI
     output$column.filter <- renderUI({
@@ -74,24 +80,6 @@ shinyServer(function(input, output, session) {
         }
     })
     
-    # Filter data by row selections
-    # filter.df <- reactive({
-    #     filter.df <- column.filter.df()
-    #     if(input$switch_season_filter == 1){
-    #         season.selected <- input$data.season.filter
-    #         filter.df <- filter.df %>% filter(season %in% season.selected)
-    #         if(input$switch_game_filter == 1){
-    #             game.selected <- input$data.game.filter
-    #             filter.df <- filter.df %>% filter(game_type %in% game.selected)
-    #             if(input$switch_team_filter ==1){
-    #                 team.selected <- input$data.team.filter
-    #                 filter.df <- filter.df %>% filter(away_team %in% team.selected | home_team %in% team.selected)
-    #             }
-    #         }
-    #     }
-    #     return(filter.df)
-    # })
-    
     filter.df <- reactive({
         season.selected <- input$data.season.filter
         game.selected <- input$data.game.filter
@@ -99,22 +87,6 @@ shinyServer(function(input, output, session) {
         if(input$switch_season_filter == 0 & input$switch_game_filter == 0 & input$switch_team_filter == 0){
             filter.df <- column.filter.df()
         }else if(input$switch_season_filter == 0 & input$switch_game_filter == 0 & input$switch_team_filter == 1){
-            # validate(
-            #     need(input$data.column.filter %in% c("away_team", "home_team"), "Please select Away Team or Home Team in column filter")
-            # )
-            # if("away_team" %in% input$data.column.filter){
-            #     if("home_team" %in% input$data.column.filter){
-            #         filter.df <- column.filter.df() %>% filter(away_team %in% team.selected, home_team %in% team.selected)
-            #     }else{
-            #         filter.df <- column.filter.df() %>% filter(away_team %in% team.selected)
-            #     }
-            # }else if("home_team" %in% input$data.column.filter){
-            #     if("away_team" %in% input$data.column.filter){
-            #         filter.df <- column.filter.df() %>% filter(away_team %in% team.selected, home_team %in% team.selected)
-            #     }else{
-            #         filter.df <- column.filter.df() %>% filter(home_team %in% team.selected)
-            #     }
-            # }
             filter.df <- column.filter.df() %>% filter(away_team %in% team.selected | home_team %in% team.selected)
         }else if(input$switch_season_filter == 0 & input$switch_game_filter == 1 & input$switch_team_filter == 0){
             filter.df <- column.filter.df() %>% filter(game_type %in% game.selected)
@@ -155,9 +127,9 @@ shinyServer(function(input, output, session) {
     })
     
     # Update pickerInput if season switchInput is changed
-    observeEvent(input$switch_season_filter,{
-        updatePickerInput(session, inputId = "data.season.filter", selected = character(0))
-    })
+    # observeEvent(input$switch_season_filter,{
+    #     updatePickerInput(session, inputId = "data.season.filter", selected = character(0))
+    # })
     
     # Game Filter Ui
     output$game.filter <- renderUI({
@@ -182,16 +154,13 @@ shinyServer(function(input, output, session) {
     })
     
     # Update pickerInput if season switchInput is changed
-    observeEvent(input$switch_game_filter,{
-        updatePickerInput(session, inputId = "data.game.filter", selected = character(0))
-    })
+    # observeEvent(input$switch_game_filter,{
+    #     updatePickerInput(session, inputId = "data.game.filter", selected = character(0))
+    # })
     
     # Team Filter Ui
     output$team.filter <- renderUI({
         if(input$switch_column_filter == 0){
-            season.selected <- input$data.season.filter
-            game.selected <- input$data.game.filter
-            possible.teams <- 3
             pickerInput(inputId = "data.team.filter",
                         label = "Select teams to filter by",
                         choices = levels(column.filter.df()$away_team),
@@ -200,21 +169,30 @@ shinyServer(function(input, output, session) {
             )
         }else{
             validate(
-                need(input$data.column.filter %in% c("away_team","home_team"), "Neither team column is not selected")
+                need("away_team" %in% input$data.column.filter | "home_team" %in% input$data.column.filter, "Neither team column is not selected")
             )
-            pickerInput(inputId = "data.team.filter",
-                        label = "Select teams to filter by",
-                        choices = levels(column.filter.df()$away_team),
-                        multiple = TRUE,
-                        options = pickerOptions(actionsBox = TRUE, title = "Make a selection")
-            )
+            if("away_team" %in% input$data.column.filter){
+                pickerInput(inputId = "data.team.filter",
+                            label = "Select teams to filter by",
+                            choices = levels(column.filter.df()$away_team),
+                            multiple = TRUE,
+                            options = pickerOptions(actionsBox = TRUE, title = "Make a selection")
+                )
+            }else{
+                pickerInput(inputId = "data.team.filter",
+                            label = "Select teams to filter by",
+                            choices = levels(column.filter.df()$home_team),
+                            multiple = TRUE,
+                            options = pickerOptions(actionsBox = TRUE, title = "Make a selection")
+                )
+            }
         }
     })
     
     # Update pickerInput if season switchInput is changed
-    observeEvent(input$switch_team_filter,{
-        updatePickerInput(session, inputId = "data.team.filter", selected = character(0))
-    })
+    # observeEvent(input$switch_team_filter,{
+    #     updatePickerInput(session, inputId = "data.team.filter", selected = character(0))
+    # })
     
     # Output the data table to scroll through
     output$data.table <- DT::renderDataTable(options = list(scrollX = TRUE),{
@@ -244,4 +222,7 @@ shinyServer(function(input, output, session) {
             }
         })
     })
+    
+    # ============ Data Exploration Tab ======================
+    
 })
