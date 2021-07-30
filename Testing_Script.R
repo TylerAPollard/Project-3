@@ -1,7 +1,7 @@
-# summary.df <- game.df[c(input$summary_variable_filter,input$summary.variable)]
-# summary.df <- summary.df[input$summary_variable_rows, ]
-# summary.df <- summary.df[ , -1]
-summary.df <- game.df[c(input$summary.variable)]
+summary.df <- game.df[c("season", "total")]#, "total_line")]
+summary.df <- summary.df[summary.df$season == 2002, ]
+summary.df <- summary.df[-1]
+#summary.df <- game.df[c("total", "total_line")]
 summary.table <- data.frame()
 for(i in colnames(summary.df)){
   sum.table <- summarise(summary.df[i],

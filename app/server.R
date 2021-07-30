@@ -36,7 +36,6 @@ shinyServer(function(input, output, session) {
     game.df <- as.data.frame(game.df)
     game.df <- game.df %>% filter(season != 2021)
     game.df$game_id <- as.character(game.df$game_id)
-    game.df$season <- as_factor(game.df$season)
     game.df$gameday <- as.character(game.df$gameday)
     game.df$gametime <- as.character(game.df$gametime)
     game.df$away_qb_id <- as.character(game.df$away_qb_id)
@@ -233,16 +232,24 @@ shinyServer(function(input, output, session) {
         pickerInput(inputId = "summary_variable_rows",
                     label = "Select rows to filter by",
                     choices = levels(summary.df),
-                    multiple = TRUE
+                    multiple = TRUE,
+                    options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
                     )
     })
     
     # Summary table
     output$summary.table <- renderTable(rownames = TRUE,{
-        # summary.df <- game.df[c(input$summary_variable_filter,input$summary.variable)]
-        # summary.df <- summary.df[input$summary_variable_rows, ]
-        # summary.df <- summary.df[ , -1]
-        summary.df <- game.df[c(input$summary.variable)]
+        game.df$season <- as_factor(game.df$season)
+        if(input$switch_summary_filter){
+            validate(
+                need(input$summary_variable_rows, "Please select row to filter by")
+            )
+            summary.df <- game.df[c(input$summary_variable_filter, input$summary.variable)]
+            summary.df <- summary.df[summary.df[[input$summary_variable_filter]] == input$summary_variable_rows, ]
+            summary.df <- summary.df[-1]
+        }else{
+            summary.df <- game.df[c(input$summary.variable)]
+        }
         summary.table <- data.frame()
         for(i in colnames(summary.df)){
             sum.table <- summarise(summary.df[i],
