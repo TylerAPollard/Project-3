@@ -17,6 +17,7 @@ library(lubridate)
 library(forcats)
 library(knitr)
 library(DT)
+library(readr)
 
 shinyUI(
     bs4DashPage(dark = NULL,
@@ -112,13 +113,47 @@ shinyUI(
                                hr(),
                                fluidRow(
                                    column(width = 4,
-                                          box(title = strong("Summary Inputs"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
-                                              
+                                          box(title = strong("Summary Inputs"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              pickerInput(inputId = "summary.variable",
+                                                          label = "Select variable to summarize",
+                                                          choices = list(
+                                                              "Point Total" = "total",
+                                                              "Total Line" = "total_line",
+                                                              "Point Differential" = "result",
+                                                              "Spread Line" = "spread_line",
+                                                              "Temperature" = "temp",
+                                                              "Wind Speed" = "wind"),
+                                                          multiple = TRUE
+                                              ),
+                                              h6("Filter by row"),
+                                              switchInput(inputId = "switch_summary_filter",
+                                                          onStatus = "success",
+                                                          offStatus = "danger",
+                                                          value = FALSE
+                                              ),
+                                              conditionalPanel(condition = "input.switch_summary_filter",
+                                                               pickerInput(inputId = "summary_variable_filter",
+                                                                           label = "Select variable to filter by",
+                                                                           choices = list(
+                                                                               "Season" = "season",
+                                                                               "Game Type" = "game_type",
+                                                                               "Weekday" = "weekday",
+                                                                               "Team" = "away_team",
+                                                                               "Overtime" = "overtime",
+                                                                               "Division Game" = "div_game",
+                                                                               "Roof" = "roof",
+                                                                               "Surface" = "surface"
+                                                                           )
+                                                               )
+                                              ),
+                                              conditionalPanel(condition = "input.switch_summary_filter",
+                                                               uiOutput("summary.data")
+                                                               )
                                           )
                                    ),
                                    column(width = 8,
-                                          box(title = strong("Summaries"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
-                                              
+                                          box(title = strong("Summaries"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              tableOutput("summary.table")
                                           )
                                    )
                                ),
@@ -131,7 +166,6 @@ shinyUI(
                                    ),
                                    column(width = 8,
                                           box(title = strong("Visuals"), width = 12, status = "gray-dark", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
-                                              
                                           )
                                    )
                                )

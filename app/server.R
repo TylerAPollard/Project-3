@@ -7,6 +7,7 @@
 library(shiny)
 library(shinydashboard)
 library(bs4Dash)
+library(shinyWidgets)
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
@@ -14,6 +15,7 @@ library(caret)
 library(fresh)
 library(lubridate)
 library(forcats)
+library(knitr)
 library(DT)
 library(readr)
 
@@ -34,6 +36,7 @@ shinyServer(function(input, output, session) {
     game.df <- as.data.frame(game.df)
     game.df <- game.df %>% filter(season != 2021)
     game.df$game_id <- as.character(game.df$game_id)
+    game.df$season <- as_factor(game.df$season)
     game.df$gameday <- as.character(game.df$gameday)
     game.df$gametime <- as.character(game.df$gametime)
     game.df$away_qb_id <- as.character(game.df$away_qb_id)
@@ -224,5 +227,37 @@ shinyServer(function(input, output, session) {
     })
     
     # ============ Data Exploration Tab ======================
+    # Filter summary data
+    output$summary.data <- renderUI({
+        summary.df <- game.df[[input$summary_variable_filter]]
+        pickerInput(inputId = "summary_variable_rows",
+                    label = "Select rows to filter by",
+                    choices = levels(summary.df),
+                    multiple = TRUE
+                    )
+    })
     
+    # Summary table
+    output$summary.table <- renderTable(rownames = TRUE,{
+        # summary.df <- game.df[c(input$summary_variable_filter,input$summary.variable)]
+        # summary.df <- summary.df[input$summary_variable_rows, ]
+        # summary.df <- summary.df[ , -1]
+        summary.df <- game.df[c(input$summary.variable)]
+        summary.table <- data.frame()
+        for(i in colnames(summary.df)){
+            sum.table <- summarise(summary.df[i],
+                Minimum = min(summary.df[[i]], na.rm = TRUE),
+                `1st Qu.` = quantile(summary.df[[i]], 0.25, na.rm = TRUE),
+                Median = median(summary.df[[i]], na.rm = TRUE),
+                Mean = mean(summary.df[[i]], na.rm = TRUE),
+                `3rd Qu.` = quantile(summary.df[[i]], 0.75, na.rm = TRUE),
+                Maximum = max(summary.df[[i]],na.rm = TRUE),
+                `St. Dev.` = sd(summary.df[[i]],na.rm = TRUE)
+            )
+            rownames(sum.table) <- i
+            summary.table <- rbind(summary.table, sum.table)
+        }
+        
+        summary.table
+    })
 })
