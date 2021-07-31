@@ -18,6 +18,7 @@ library(forcats)
 library(knitr)
 library(DT)
 library(readr)
+library(plotly)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
@@ -37,6 +38,11 @@ shinyServer(function(input, output, session) {
     game.df <- game.df %>% filter(season != 2021)
     game.df$game_id <- as.character(game.df$game_id)
     game.df$gameday <- as.character(game.df$gameday)
+    game.df$season <- as_factor(game.df$season)
+    levels(game.df$season) <- list("1999" = 1, "2000" = 2, "2001" = 3, "2002" = 4, "2003" = 5, "2004" = 6, "2005" = 7, "2006" = 8,
+                                   "2007" = 9, "2008" = 10, "2009" = 11, "2010" = 12, "2011" = 13, "2012" = 14, "2013" = 15, "2014" = 16,
+                                   "2015" = 17, "2016" = 18, "2017" = 19, "2018" = 20, "2019" = 21, "2020" = 22)
+    game.df$game_type <- relevel(game.df$game_type, "REG", "WC", "DIV", "CON", "SB")
     game.df$gametime <- as.character(game.df$gametime)
     game.df$away_qb_id <- as.character(game.df$away_qb_id)
     game.df$home_qb_id <- as.character(game.df$home_qb_id)
@@ -54,6 +60,7 @@ shinyServer(function(input, output, session) {
     levels(game.df$div_game) <- list("Yes" = 1, "No" = 0)
     game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
     game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
+    game.df$roof <- droplevels(game.df$roof)
     
     # Column Filter UI
     output$column.filter <- renderUI({
@@ -111,7 +118,7 @@ shinyServer(function(input, output, session) {
         if(input$switch_column_filter == 0){
             pickerInput(inputId = "data.season.filter",
                         label = "Select seasons to filter by",
-                        choices = unique(column.filter.df()$season),
+                        choices = levels(column.filter.df()$season),
                         multiple = TRUE,
                         options = pickerOptions(actionsBox = TRUE, title = "Make a selection")
             )
@@ -121,7 +128,7 @@ shinyServer(function(input, output, session) {
             )
             pickerInput(inputId = "data.season.filter",
                         label = "Select seasons to filter by",
-                        choices = unique(column.filter.df()$season),
+                        choices = levels(column.filter.df()$season),
                         multiple = TRUE,
                         options = pickerOptions(actionsBox = TRUE, title = "Make a selection")
             )
@@ -226,6 +233,34 @@ shinyServer(function(input, output, session) {
     })
     
     # ============ Data Exploration Tab ======================
+    ## Contigency Tables
+    output$contingency.table <- renderTable(options = list(scrollX = TRUE),{
+        validate(
+            need(input$contingency_variable1, "Please select variable for contingency table")
+        )
+        if(input$switch_contingency_filter){
+            contingency.table <- table(game.df[[input$contingency_variable1]], game.df[[input$contingency_variable2]])
+            contingency.table <- as.data.frame(contingency.table)
+            colnames(contingency.table) <- c(input$contingency_variable1, input$contingency_variable2, "Frequency")
+            contingency.table <- contingency.table %>% spread(key = input$contingency_variable2, value = Frequency)
+        }else{
+            # if(input$contingency_variable1 == "away_team"){
+            #     contingency.table <- table(game.df[["away_team"]], game.df[["home_team"]])
+            #     contingency.table <- as.data.frame(contingency.table)
+            #     colnames(contingency.table) <- c(input$contingency_variable1, "Frequency")
+            # }else{
+            #     contingency.table <- table(game.df[[input$contingency_variable1]])
+            #     contingency.table <- as.data.frame(contingency.table)
+            #     colnames(contingency.table) <- c(input$contingency_variable1, "Frequency")
+            # }
+            contingency.table <- table(game.df[[input$contingency_variable1]])
+            contingency.table <- as.data.frame(contingency.table)
+            colnames(contingency.table) <- c(input$contingency_variable1, "Frequency")
+        }
+        contingency.table
+    })
+    
+    ## Summary Tables
     # Filter summary data
     output$summary.data <- renderUI({
         summary.df <- game.df[[input$summary_variable_filter]]
@@ -239,14 +274,25 @@ shinyServer(function(input, output, session) {
     
     # Summary table
     output$summary.table <- renderTable(rownames = TRUE,{
-        game.df$season <- as_factor(game.df$season)
+        validate(
+            need(input$summary.variable, "Please select variable to summarize")
+        )
         if(input$switch_summary_filter){
             validate(
                 need(input$summary_variable_rows, "Please select row to filter by")
             )
-            summary.df <- game.df[c(input$summary_variable_filter, input$summary.variable)]
-            summary.df <- summary.df[summary.df[[input$summary_variable_filter]] == input$summary_variable_rows, ]
-            summary.df <- summary.df[-1]
+            if(input$summary_variable_filter == "away_team"){
+                summary_variable_filter <- c("away_team", "home_team")
+                summary.variable <- input$summary.variable
+                summary_variable_rows <- input$summary_variable_rows
+                summary.df <- game.df[c(summary_variable_filter, summary.variable)]
+                summary.df <- summary.df[summary.df[[summary_variable_filter[1]]] %in% summary_variable_rows | summary.df[[summary_variable_filter[2]]] %in% summary_variable_rows, ]
+                summary.df <- summary.df[-c(1,2)]
+            }else{
+                summary.df <- game.df[c(input$summary_variable_filter, input$summary.variable)]
+                summary.df <- summary.df[summary.df[[input$summary_variable_filter]] %in% input$summary_variable_rows, ]
+                summary.df <- summary.df[-1]
+            }
         }else{
             summary.df <- game.df[c(input$summary.variable)]
         }
@@ -266,5 +312,68 @@ shinyServer(function(input, output, session) {
         }
         
         summary.table
-    })
+    }) # end summary table
+    
+    # Visual Outputs
+    # Visual Filter
+    output$visual_filter_variable <- renderUI({
+        if(input$plot_type == "bar"){
+            pickerInput(inputId = "bar_filter_variable",
+                        label = "Please select rows to filter by",
+                        choices = levels(game.df[[input$bar_variable]]),
+                        multiple = TRUE,
+                        options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+            )
+        }
+    }) 
+    # Visual plot
+    output$visual_output <- renderPlotly({
+        if(input$plot_type == "bar"){
+            bar.df <- game.df
+            if(input$switch_visual_filter){
+                validate(
+                    need(input$bar_filter_variable, "Please select rows to filter by")
+                )
+                bar_nrow <- c()
+                bar.df <- bar.df[bar.df[[input$bar_variable]] %in% input$bar_filter_variable, ]
+                # bar_unique <- as.character(unique(bar.df[[input$bar_variable]]))
+                # bar.df[[input$bar_variable]] <- unclass(bar.df[[input$bar_variable]])
+                # bar.df[[input$bar_variable]] <- as_factor(bar.df[[input$bar_variable]])
+                # levels(bar.df[[input$bar_variable]]) <- bar_unique
+                for(j in levels(bar.df[[input$bar_variable]])){
+                    nrow_var <- nrow(bar.df[bar.df[[input$bar_variable]] == j, ])
+                    bar_nrow <- c(bar_nrow, nrow_var)
+                }
+                plot_ly(x = levels(bar.df[[input$bar_variable]]), y = bar_nrow, type = "bar") %>%
+                    layout(xaxis = list(title = input$bar_variable), yaxis = list(title = "Number of Games"))
+            }else{
+                bar_nrow <- c()
+                for(j in levels(bar.df[[input$bar_variable]])){
+                    nrow_var <- nrow(bar.df[bar.df[[input$bar_variable]] == j, ])
+                    bar_nrow <- c(bar_nrow, nrow_var)
+                }
+                plot_ly(x = levels(bar.df[[input$bar_variable]]), y = bar_nrow, type = "bar") %>%
+                    layout(xaxis = list(title = input$bar_variable), yaxis = list(title = "Number of Games"))
+            }
+        }else if(input$plot_type == "histogram"){
+            hist.df <- game.df
+            if(input$visual_filter){
+                
+            }else{
+                plot_ly(data = hist.df, x = hist.df[input$histogram_variables], type = "histogram")
+            }
+        }else if(input$plot_type == "boxplot"){
+            if(input$visual_filter){
+                
+            }else{
+                
+            }
+        }else{
+            if(input$visual_filter){
+                
+            }else{
+                
+            }
+        }
+    }) # end visual filter
 })

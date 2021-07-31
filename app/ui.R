@@ -18,6 +18,7 @@ library(forcats)
 library(knitr)
 library(DT)
 library(readr)
+library(plotly)
 
 shinyUI(
     bs4DashPage(dark = NULL,
@@ -108,14 +109,55 @@ shinyUI(
                 ), # data tab
                 # =========== Data Exploration Tab ==============
                 bs4TabItem(tabName = "data_exploration",
-                           fluidPage(
+                           fixedPage(
                                h1("Data Exploration"),
                                hr(),
                                fluidRow(
                                    column(width = 4,
                                           box(title = strong("Summary Inputs"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              h3("Contingency Table"),
+                                              pickerInput(inputId = "contingency_variable1",
+                                                          label = "Select variable to create contingency table for",
+                                                          choices = list(
+                                                              "Season" = "season",
+                                                              "Game Type" = "game_type",
+                                                              "Weekday" = "weekday",
+                                                              "Team" = "away_team",
+                                                              "Overtime" = "overtime",
+                                                              "Division Game" = "div_game",
+                                                              "Roof" = "roof",
+                                                              "Surface" = "surface"
+                                                          ),
+                                                          selected = NULL,
+                                                          options = pickerOptions(actionsBox = TRUE)
+                                              ),
+                                              h6("Add variable"),
+                                              switchInput(inputId = "switch_contingency_filter",
+                                                          onStatus = "success",
+                                                          offStatus = "danger",
+                                                          value = FALSE
+                                              ),
+                                              conditionalPanel(condition = "input.switch_contingency_filter",
+                                                               pickerInput(inputId = "contingency_variable2",
+                                                                           label = "Select second variable for contigency table",
+                                                                           choices = list(
+                                                                               "Season" = "season",
+                                                                               "Game Type" = "game_type",
+                                                                               "Weekday" = "weekday",
+                                                                               "Team" = "away_team",
+                                                                               "Overtime" = "overtime",
+                                                                               "Division Game" = "div_game",
+                                                                               "Roof" = "roof",
+                                                                               "Surface" = "surface"
+                                                                           ),
+                                                                           selected = "game_type",
+                                                                           options = pickerOptions(actionsBox = TRUE)
+                                                               )
+                                              ),
+                                              hr(),
+                                              h3("Summary Table"),
                                               pickerInput(inputId = "summary.variable",
-                                                          label = "Select variable to summarize",
+                                                          label = "Select variables to summarize",
                                                           choices = list(
                                                               "Point Total" = "total",
                                                               "Total Line" = "total_line",
@@ -123,7 +165,8 @@ shinyUI(
                                                               "Spread Line" = "spread_line",
                                                               "Temperature" = "temp",
                                                               "Wind Speed" = "wind"),
-                                                          multiple = TRUE
+                                                          multiple = TRUE,
+                                                          options = pickerOptions(actionsBox = TRUE)
                                               ),
                                               h6("Filter by row"),
                                               switchInput(inputId = "switch_summary_filter",
@@ -148,24 +191,153 @@ shinyUI(
                                               ),
                                               conditionalPanel(condition = "input.switch_summary_filter",
                                                                uiOutput("summary.data")
-                                                               )
+                                              )
                                           )
                                    ),
                                    column(width = 8,
                                           box(title = strong("Summaries"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              h3("Contingency Table"),
+                                              tableOutput("contingency.table"),
+                                              hr(),
+                                              h3("Summary Table"),
                                               tableOutput("summary.table")
                                           )
                                    )
                                ),
                                hr(),
+                               # Visual Inputs
                                fluidRow(
                                    column(width = 4,
-                                          box(title = strong("Visual Inputs"), width = 12, status = "gray-dark", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
-                                              
-                                          )
+                                          box(title = strong("Visual Inputs"), width = 12, status = "gray-dark", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              radioGroupButtons(inputId = "plot_type",
+                                                                label = "Please select graph type",
+                                                                choices = c(
+                                                                    "Bar Chart" = "bar",
+                                                                    "Histogram" = "histogram",
+                                                                    "Boxplot" = "boxplot",
+                                                                    "Scatter Plot" = "scatter"
+                                                                ),
+                                                                checkIcon = list(
+                                                                    yes = icon("ok", lib = "glyphicon")
+                                                                ),
+                                                                direction = "vertical"
+                                              ),
+                                              # Boxplot
+                                              conditionalPanel(condition = "input.plot_type == 'bar'",
+                                                               pickerInput(inputId = "bar_variable",
+                                                                           label = "Please select variables for bar chart",
+                                                                           choices = list(
+                                                                               "Season" = "season",
+                                                                               "Game Type" = "game_type",
+                                                                               "Weekday" = "weekday",
+                                                                               "Team" = "away_team",
+                                                                               "Overtime" = "overtime",
+                                                                               "Division Game" = "div_game",
+                                                                               "Roof" = "roof",
+                                                                               "Surface" = "surface"
+                                                                           ),
+                                                                           options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+                                                               )
+                                              ), # end boxplot
+                                              # Histogram
+                                              conditionalPanel(condition = "input.plot_type == 'histogram'",
+                                                               pickerInput(inputId = "histogram_variables",
+                                                                           label = "Please select variables for histogram",
+                                                                           choices = list(
+                                                                               "Point Total" = "total",
+                                                                               "Total Line" = "total_line",
+                                                                               "Point Differential" = "result",
+                                                                               "Spread Line" = "spread_line",
+                                                                               "Temperature" = "temp",
+                                                                               "Wind Speed" = "wind"
+                                                                           ),
+                                                                           options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+                                                               )
+                                              ),
+                                              # Add desnity plot
+                                              conditionalPanel(condition = "input.plot_type == 'histogram'",
+                                                               h6(strong("Add density plot")),
+                                                               switchInput(inputId = "switch_histogram",
+                                                                           onStatus = "success",
+                                                                           offStatus = "danger",
+                                                                           value = FALSE
+                                                               )
+                                              ), # end histogram
+                                              # Boxplot
+                                              conditionalPanel(condition = "input.plot_type == 'boxplot'",
+                                                               # Discrete Variable
+                                                               pickerInput(inputId = "boxplot_discrete_variables",
+                                                                           label = "Please select discrete variable for boxplot",
+                                                                           choices = list(
+                                                                               "Season" = "season",
+                                                                               "Game Type" = "game_type",
+                                                                               "Weekday" = "weekday",
+                                                                               "Team" = "away_team",
+                                                                               "Overtime" = "overtime",
+                                                                               "Division Game" = "div_game",
+                                                                               "Roof" = "roof",
+                                                                               "Surface" = "surface"
+                                                                           ),
+                                                               ),
+                                                               # Continuous Variable
+                                                               pickerInput(inputId = "boxplot_continuous_variable",
+                                                                           label = "Please select continuous variable for boxplot",
+                                                                           choices = list(
+                                                                               "Point Total" = "total",
+                                                                               "Total Line" = "total_line",
+                                                                               "Point Differential" = "result",
+                                                                               "Spread Line" = "spread_line",
+                                                                               "Temperature" = "temp",
+                                                                               "Wind Speed" = "wind"
+                                                                           ),
+                                                               )
+                                              ), # end boxplot
+                                              # Scatter plot
+                                              conditionalPanel(condition = "input.plot_type == 'scatter'",
+                                                               pickerInput(inputId = "scatter_variable1",
+                                                                           label = "Please select x variable",
+                                                                           choices = list(
+                                                                               "Point Total" = "total",
+                                                                               "Total Line" = "total_line",
+                                                                               "Point Differential" = "result",
+                                                                               "Spread Line" = "spread_line",
+                                                                               "Temperature" = "temp",
+                                                                               "Wind Speed" = "wind"
+                                                                           ),
+                                                                           selected = "total"
+                                                               )
+                                              ),
+                                              conditionalPanel(condition = "input.plot_type == 'scatter'",
+                                                               pickerInput(inputId = "scatter_variable2",
+                                                                           label = "Please select y variable",
+                                                                           choices = list(
+                                                                               "Point Total" = "total",
+                                                                               "Total Line" = "total_line",
+                                                                               "Point Differential" = "result",
+                                                                               "Spread Line" = "spread_line",
+                                                                               "Temperature" = "temp",
+                                                                               "Wind Speed" = "wind"
+                                                                           ),
+                                                                           selected = "total_line"
+                                                               )
+                                              ),
+                                              # Visual filter
+                                              h6("Filter by row"),
+                                              switchInput(inputId = "switch_visual_filter",
+                                                          onStatus = "success",
+                                                          offStatus = "danger",
+                                                          value = FALSE
+                                              ),
+                                              # Visual filter variable
+                                              conditionalPanel(condition = "input.switch_visual_filter == 1",
+                                                               uiOutput("visual_filter_variable")
+                                              )
+                                          ) # end visual input box
                                    ),
                                    column(width = 8,
-                                          box(title = strong("Visuals"), width = 12, status = "gray-dark", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
+                                          box(title = strong("Visuals"), width = 12, status = "gray-dark", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              plotlyOutput("visual_output"),
+                                              div("Scroll over plot and click ", icon("camera"),  "to download graph")
                                           )
                                    )
                                )
