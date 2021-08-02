@@ -633,25 +633,155 @@ shinyServer(function(input, output, session) {
     #                 options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
     #     )
     # })
-    output$prediction_variables <- renderUI({
+    output$season_predictor <- renderUI({
         if("season" %in% input$model_variables){
             pickerInput(inputId = "season_predictor",
                         label = "Please select season predictor",
                         choices = levels(game.df$season)
             )
         }
+    })
+    output$game_type_predictor <- renderUI({
         if("game_type" %in% input$model_variables){
             pickerInput(inputId = "game_type_predictor",
                         label = "Please select game type predictor",
-                        choices = levels(game.df$season)
+                        choices = levels(game.df$game_type)
+            )
+        }
+    })
+    output$weekday_predictor <- renderUI({
+        if("weekday" %in% input$model_variables){
+            pickerInput(inputId = "weekday_predictor",
+                        label = "Please select weekday predictor",
+                        choices = levels(game.df$weekday)
+            )
+        }
+    })
+    output$team_predictor <- renderUI({
+        if("away_team" %in% input$model_variables){
+            pickerInput(inputId = "team_predictor",
+                        label = "Please select team predictor",
+                        choices = levels(game.df$away_team)
+            )
+        }
+    })
+    output$overtime_predictor <- renderUI({
+        if("overtime" %in% input$model_variables){
+            pickerInput(inputId = "overtime_predictor",
+                        label = "Please select overtime predictor",
+                        choices = levels(game.df$overtime)
+            )
+        }
+    })
+    output$rest_predictor <- renderUI({
+        if("away_rest" %in% input$model_variables){
+            sliderInput(inputId = "rest_predictor",
+                        label = "Please select rest predictor",
+                        min = 4,
+                        max = 17,
+                        step = 1,
+                        value = 7
+            )
+        }
+    })
+    output$spread_line_predictor <- renderUI({
+        if("spread_line" %in% input$model_variables){
+            sliderInput(inputId = "spread_line_predictor",
+                        label = "Please select spread line predictor",
+                        min = -30,
+                        max = 30,
+                        step = 0.5,
+                        value = 0
+            )
+        }
+    })
+    output$total_line_predictor <- renderUI({
+        if("total_line" %in% input$model_variables){
+            numericInput(inputId = "total_line_predictor",
+                        label = "Please select total line predictor",
+                        min = 20,
+                        max = 80,
+                        step = 0.5,
+                        value = 45
+            )
+        }
+    })
+    output$odds_predictor <- renderUI({
+        if("under_odds" %in% input$model_variables){
+            sliderTextInput(inputId = "odds_predictor",
+                        label = "Please select odds predictor",
+                        choices = c(seq(-130, -100, by = 1), seq(100, 130, by = 1)),
+                        selected = -100
+            )
+        }
+    })
+    output$div_game_predictor <- renderUI({
+        if("div_game" %in% input$model_variables){
+            pickerInput(inputId = "div_game_predictor",
+                        label = "Please select division predictor",
+                        choices = levels(game.df$div_game)
+            )
+        }
+    })
+    output$roof_predictor <- renderUI({
+        if("roof" %in% input$model_variables){
+            pickerInput(inputId = "roof_predictor",
+                        label = "Please select roof predictor",
+                        choices = levels(game.df$roof)
+            )
+        }
+    })
+    output$surface_predictor <- renderUI({
+        if("surface" %in% input$model_variables){
+            pickerInput(inputId = "surface_predictor",
+                        label = "Please select surface predictor",
+                        choices = levels(game.df$surface)
+            )
+        }
+    })
+    output$temp_predictor <- renderUI({
+        if("temp" %in% input$model_variables){
+            numericInput(inputId = "temp_predictor",
+                         label = "Please select temperature predictor",
+                         min = -20,
+                         max = 110,
+                         step = 1,
+                         value = 60
+            )
+        }
+    })
+    output$wind_predictor <- renderUI({
+        if("wind" %in% input$model_variables){
+            numericInput(inputId = "wind_predictor",
+                         label = "Please select wind speed predictor",
+                         min = 0,
+                         max = 80,
+                         step = 1,
+                         value = 6
             )
         }
     })
     
-    output$season_predictor <- renderUI({
-        pickerInput(inputId = "season_predictor",
-                    label = "Please select season predictor",
-                    choices = levels(game.df$season)
-        )
+    # Prediction
+    prediction_variables <- eventReactive(input$run_prediction, {
+        pred.df <- game.df[-(1:nrow(game.df)), ]
+        pred.df$season <- input$season_predictor
+        pred.df$game_type <- input$game_type_predictor
+        pred.df$weekday <- input$weekday_predictor
+        pred.df$away_team <- input$team_predictor
+        pred.df$overtime <- input$overtime_predictor
+        pred.df$away_rest <- input$rest_predictor
+        pred.df$spread_line <- input$spread_line_predictor
+        pred.df$under_odds <- input$odds_predictor
+        pred.df$div_game <- input$div_game_predictor
+        pred.df$roof <- input$roof_predictor
+        pred.df$surface <- input$surface_predictor
+        pred.df$temp <- input$temp_predictor
+        pred.df$wind <- input$wind_predictor
+    })
+    
+    output$prediction_value <- renderText({
+        
+        paste0("The predicted total points is ", 45)
     })
 })

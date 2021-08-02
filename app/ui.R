@@ -435,37 +435,20 @@ shinyUI(
                                                                 direction = "vertical"
                                               ),
                                               br(),
-                                              uiOutput("prediction_variables"),
-                                              br(),
-                                              conditionalPanel(condition = "'season' %in% input.model_variables",
-                                                               h5("worked")
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'game_type'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'weekday'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'away_team'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'overtime'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'away_rest'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'spread_line'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'total_line'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'under_odds'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'div_game'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'roof'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'surface'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'temp'"
-                                              ),
-                                              conditionalPanel(condition = "input.model_variables == 'wind'"
-                                              ),
+                                              uiOutput("season_predictor"),
+                                              uiOutput("game_type_predictor"),
+                                              uiOutput("weekday_predictor"),
+                                              uiOutput("team_predictor"),
+                                              uiOutput("overtime_predictor"),
+                                              uiOutput("rest_predictor"),
+                                              uiOutput("spread_line_predictor"),
+                                              uiOutput("total_line_predictor"),
+                                              uiOutput("odds_predictor"),
+                                              uiOutput("div_game_predictor"),
+                                              uiOutput("roof_predictor"),
+                                              uiOutput("surface_predictor"),
+                                              uiOutput("temp_predictor"),
+                                              uiOutput("wind_predictor"),
                                               hr(),
                                               actionBttn(inputId = "run_prediction",
                                                          label = "Generate prediction"
@@ -473,7 +456,8 @@ shinyUI(
                                           )
                                    ),
                                    column(width = 8,
-                                          box(title = strong("Prediction Output"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
+                                          box(title = strong("Prediction Output"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              textOutput("prediction_value")
                                           )
                                    )
                                )

@@ -3,6 +3,7 @@ game.df <- read.csv("games.csv")
 game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
 game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
 game.df <- game.df[complete.cases(game.df), ]
+game.df <- as.data.frame(game.df)
 game.df$game_id <- as.character(game.df$game_id)
 game.df$season <- as_factor(game.df$season)
 # levels(game.df$season) <- list("1999" = 1, "2000" = 2, "2001" = 3, "2002" = 4, "2003" = 5, "2004" = 6, "2005" = 7, "2006" = 8,
@@ -25,6 +26,15 @@ game.df$overtime <- as_factor(game.df$overtime)
 levels(game.df$overtime) <- list("Yes" = 1, "No" = 0)
 game.df$div_game <- as_factor(game.df$div_game)
 levels(game.df$div_game) <- list("Yes" = 1, "No" = 0)
+# for(i in 1:nrow(game.df)){
+#   if(game.df$total[i] > game.df$total_line[i]){
+#     game.df$total_outcome[i] <- "Over"
+#   }else{
+#     game.df$total_outcome[i] <- "Under"
+#   }
+# }
+# game.df$total_outcome <- as_factor(game.df$total_outcome)
+# game.df.totals <- game.df %>% select(total, total_line, total_outcome)
 
 # Contigency Table
 switch_contingency_filter <- TRUE
@@ -110,10 +120,12 @@ test <- dplyr::setdiff(1:nrow(game.df), train)
 game.df.train <- game.df[train, ]
 game.df.test <- game.df[test, ]
 train_control <- trainControl(method = "cv", number = 5)
-lm_variables1 <- c("season", "game_type","weekday", "away_team", "overtime", "away_rest", "spread_line", "total_line", "under_odds", "div_game", "roof", "surface", "temp", "wind")
-lm_variables <- c("season", "game_type", "weekday", "under_odds")
+lm_variables1 <- c("season", "game_type","weekday", "away_team", "home_team", "overtime", "away_rest", "spread_line", "total_line", "under_odds", "div_game", "roof", "surface", "temp", "wind")
+lm_variables <- c("overtime", "total_line", "div_game", "temp", "wind")
+model <- reformulate(termlabels = lm_variables1, response = "total")
+step(lm(model, game.df.train), direction = "backward")
 set.seed(52)
-lm_fit <- train(reformulate(termlabels = lm_variables, response = "total"), data = game.df.train, 
+lm_fit <- train(model, data = game.df.train, 
             method = "lm",
             preProcess = c("center", "scale"),
             trControl = train_control
@@ -123,7 +135,7 @@ lm_pred <- predict(lm_fit, newdata = game.df.test)
 lm_test_stat <- postResample(lm_pred, game.df.test$total)
 
 set.seed(52)
-rt_fit <- train(reformulate(termlabels = lm_variables, response = "total"), data = game.df.train, 
+rt_fit <- train(model, data = game.df.train, 
                 method = "rpart",
                 preProcess = c("center", "scale"),
                 trControl = train_control
@@ -133,8 +145,9 @@ rt_pred <- predict(rt_fit, newdata = game.df.test)
 rt_test_stat <- postResample(rt_pred, game.df.test$total)
 
 set.seed(52)
-rf_fit <- train(reformulate(termlabels = lm_variables, response = "total"), data = game.df.train, 
+rf_fit <- train(model, data = game.df.train, 
                 method = "rf",
+                preProcess = c("center", "scale"),
                 trControl = train_control
 )
 rf_results <- rf_fit$results
@@ -156,3 +169,19 @@ model_statistics <- data.frame(
 rownames(model_statistics) <- c("Linear Regression", "Regression Tree", "Random Forest")
 
 test_statistics <- rbind(lm_test_stat, rt_test_stat, rf_test_stat)
+
+# Prediction
+pred.df <- game.df[-(1:nrow(game.df)), ]
+pred.df$season[1] <- "2000"
+pred.df$game_type[1] <- "REG"
+pred.df$weekday[1] <- "Sunday"
+pred.df$away_team[1] <- "BAL"
+pred.df$overtime[1] <- "Yes"
+pred.df$away_rest[1] <- 7
+pred.df$spread_line[1] <- -4.5
+pred.df$under_odds[1] <- -110
+pred.df$div_game[1] <- "Yes"
+pred.df$roof[1] <- "outdoors"
+pred.df$surface[1] <- "grass"
+pred.df$temp[1] <- 72
+pred.df$wind[1] <- 5
