@@ -1,13 +1,13 @@
 # REad in Data
 game.df <- read.csv("games.csv")
-game.df <- as.data.frame(game.df)
-game.df <- game.df %>% filter(season != 2021)
+game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
+game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
+game.df <- game.df[complete.cases(game.df), ]
 game.df$game_id <- as.character(game.df$game_id)
-#game.df$weekday <- relevel(game.df$weekday, "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday")
 game.df$season <- as_factor(game.df$season)
-levels(game.df$season) <- list("1999" = 1, "2000" = 2, "2001" = 3, "2002" = 4, "2003" = 5, "2004" = 6, "2005" = 7, "2006" = 8,
-                               "2007" = 9, "2008" = 10, "2009" = 11, "2010" = 12, "2011" = 13, "2012" = 14, "2013" = 15, "2014" = 16,
-                               "2015" = 17, "2016" = 18, "2017" = 19, "2018" = 20, "2019" = 21, "2020" = 22)
+# levels(game.df$season) <- list("1999" = 1, "2000" = 2, "2001" = 3, "2002" = 4, "2003" = 5, "2004" = 6, "2005" = 7, "2006" = 8,
+#                                "2007" = 9, "2008" = 10, "2009" = 11, "2010" = 12, "2011" = 13, "2012" = 14, "2013" = 15, "2014" = 16,
+#                                "2015" = 17, "2016" = 18, "2017" = 19, "2018" = 20, "2019" = 21, "2020" = 22)
 game.df$game_type <- relevel(game.df$game_type, "REG", "WC", "DIV", "CON", "SB")
 game.df$gameday <- as.character(game.df$gameday)
 game.df$gametime <- as.character(game.df$gametime)
@@ -25,9 +25,6 @@ game.df$overtime <- as_factor(game.df$overtime)
 levels(game.df$overtime) <- list("Yes" = 1, "No" = 0)
 game.df$div_game <- as_factor(game.df$div_game)
 levels(game.df$div_game) <- list("Yes" = 1, "No" = 0)
-game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
-game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
-game.df$roof <- droplevels(game.df$roof)
 
 # Contigency Table
 switch_contingency_filter <- TRUE
@@ -99,4 +96,63 @@ levels(test[[bar_variable]]) <- test_un
 levels(test[[bar_variable]])
 
 library(ggplot2)
+library(plotly)
 ggplot(data = game.df, aes(x = total)) + geom_histogram()
+plot_ly(data = game.df, x = game.df[["total"]], type = "histogram")
+
+plot_ly(data = game.df, x = game.df[["weekday"]], y = game.df[["total"]], type = "box")
+
+# Modeling
+library(caret)
+set.seed(52)
+train <- sample(1:nrow(game.df), size = nrow(game.df)*0.8)
+test <- dplyr::setdiff(1:nrow(game.df), train)
+game.df.train <- game.df[train, ]
+game.df.test <- game.df[test, ]
+train_control <- trainControl(method = "cv", number = 5)
+lm_variables1 <- c("season", "game_type","weekday", "away_team", "overtime", "away_rest", "spread_line", "total_line", "under_odds", "div_game", "roof", "surface", "temp", "wind")
+lm_variables <- c("season", "game_type", "weekday", "under_odds")
+set.seed(52)
+lm_fit <- train(reformulate(termlabels = lm_variables, response = "total"), data = game.df.train, 
+            method = "lm",
+            preProcess = c("center", "scale"),
+            trControl = train_control
+            )
+lm_results <- lm_fit$results
+lm_pred <- predict(lm_fit, newdata = game.df.test)
+lm_test_stat <- postResample(lm_pred, game.df.test$total)
+
+set.seed(52)
+rt_fit <- train(reformulate(termlabels = lm_variables, response = "total"), data = game.df.train, 
+                method = "rpart",
+                preProcess = c("center", "scale"),
+                trControl = train_control
+)
+rt_results <- rt_fit$results
+rt_pred <- predict(rt_fit, newdata = game.df.test)
+rt_test_stat <- postResample(rt_pred, game.df.test$total)
+
+set.seed(52)
+rf_fit <- train(reformulate(termlabels = lm_variables, response = "total"), data = game.df.train, 
+                method = "rf",
+                trControl = train_control
+)
+rf_results <- rf_fit$results
+rf_pred <- predict(rf_fit, game.df.test)
+rf_test_stat <- postResample(rf_pred, game.df.test$total)
+
+model_statistics <- data.frame(
+  RMSE = c(
+    round(lm_fit$results[["RMSE"]],4),
+    round(rt_fit$results[rt_fit$results["cp"] == rt_fit$finalModel$tuneValue[["cp"]], ][["RMSE"]], 4),
+    round(rf_fit$results[rf_fit$results["mtry"] == rf_fit$finalModel$tuneValue[["mtry"]], ][["RMSE"]], 4)
+  ),
+  Rsquared = c(
+    round(lm_fit$results[["Rsquared"]], 4),
+    round(rt_fit$results[rt_fit$results["cp"] == rt_fit$finalModel$tuneValue[["cp"]], ][["Rsquared"]], 4),
+    round(rf_fit$results[rf_fit$results["mtry"] == rf_fit$finalModel$tuneValue[["mtry"]], ][["Rsquared"]], 4)
+  )
+)
+rownames(model_statistics) <- c("Linear Regression", "Regression Tree", "Random Forest")
+
+test_statistics <- rbind(lm_test_stat, rt_test_stat, rf_test_stat)

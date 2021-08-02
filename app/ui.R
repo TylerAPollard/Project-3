@@ -20,6 +20,9 @@ library(DT)
 library(readr)
 library(plotly)
 
+## The Different sections of code may be examined individually by condensing the chunk with the heart button on the left next to 
+## the code line number
+
 shinyUI(
     bs4DashPage(dark = NULL,
         # =========== Dashboard Navbar =============
@@ -122,7 +125,8 @@ shinyUI(
                                                               "Season" = "season",
                                                               "Game Type" = "game_type",
                                                               "Weekday" = "weekday",
-                                                              "Team" = "away_team",
+                                                              "Away Team" = "away_team",
+                                                              "Home Team" = "home_team",
                                                               "Overtime" = "overtime",
                                                               "Division Game" = "div_game",
                                                               "Roof" = "roof",
@@ -144,7 +148,8 @@ shinyUI(
                                                                                "Season" = "season",
                                                                                "Game Type" = "game_type",
                                                                                "Weekday" = "weekday",
-                                                                               "Team" = "away_team",
+                                                                               "Away Team" = "away_team",
+                                                                               "Home Team" = "away_team",
                                                                                "Overtime" = "overtime",
                                                                                "Division Game" = "div_game",
                                                                                "Roof" = "roof",
@@ -230,7 +235,8 @@ shinyUI(
                                                                                "Season" = "season",
                                                                                "Game Type" = "game_type",
                                                                                "Weekday" = "weekday",
-                                                                               "Team" = "away_team",
+                                                                               "Away Team" = "away_team",
+                                                                               "Home Team" = "home_team",
                                                                                "Overtime" = "overtime",
                                                                                "Division Game" = "div_game",
                                                                                "Roof" = "roof",
@@ -254,15 +260,6 @@ shinyUI(
                                                                            options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
                                                                )
                                               ),
-                                              # Add desnity plot
-                                              conditionalPanel(condition = "input.plot_type == 'histogram'",
-                                                               h6(strong("Add density plot")),
-                                                               switchInput(inputId = "switch_histogram",
-                                                                           onStatus = "success",
-                                                                           offStatus = "danger",
-                                                                           value = FALSE
-                                                               )
-                                              ), # end histogram
                                               # Boxplot
                                               conditionalPanel(condition = "input.plot_type == 'boxplot'",
                                                                # Discrete Variable
@@ -272,7 +269,8 @@ shinyUI(
                                                                                "Season" = "season",
                                                                                "Game Type" = "game_type",
                                                                                "Weekday" = "weekday",
-                                                                               "Team" = "away_team",
+                                                                               "Away Team" = "away_team",
+                                                                               "Home Team" = "home_team",
                                                                                "Overtime" = "overtime",
                                                                                "Division Game" = "div_game",
                                                                                "Roof" = "roof",
@@ -330,7 +328,10 @@ shinyUI(
                                               ),
                                               # Visual filter variable
                                               conditionalPanel(condition = "input.switch_visual_filter == 1",
-                                                               uiOutput("visual_filter_variable")
+                                                               uiOutput("visual_filter_variable"),
+                                              ),
+                                              conditionalPanel(condition = "input.switch_visual_filter == 1",
+                                                               uiOutput("visual_filter_rows")
                                               )
                                           ) # end visual input box
                                    ),
@@ -343,19 +344,139 @@ shinyUI(
                                )
                            )
                 ),
+                # ========== Modeling Tab ===============
                 bs4TabItem(tabName = "model_info",
                            fluidPage(
-                               h1("Modeling Info")
+                               h1("Modeling Info"),
+                               hr()
                            )
                 ),
                 bs4TabItem(tabName = "model_fit",
                            fluidPage(
-                               h1("Model Fit")
+                               h1("Model Fit"),
+                               hr(),
+                               fluidRow(
+                                   column(width = 4,
+                                          box(title = strong("Model Settings"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              sliderTextInput(inputId = "data_split",
+                                                              label = "Select proportion of data for training data set",
+                                                              choices = seq(0, 1, by = 0.05),
+                                                              selected = .8,
+                                                              from_min = .5,
+                                                              from_max = .95
+                                              ),
+                                              br(),
+                                              pickerInput(inputId = "model_variables",
+                                                          label = "Please select predictor variables",
+                                                          choices = list(
+                                                              "Season" = "season",
+                                                              "Game Type" = "game_type",
+                                                              "Weekday" = "weekday",
+                                                              "Team" = "away_team",
+                                                              "Overtime" = "overtime",
+                                                              "Team Rest" = "away_rest",
+                                                              "Spread Line" = "spread_line",
+                                                              "Total Line" = "total_line",
+                                                              "Total Odds" = "under_odds",
+                                                              "Divsion Game" = "div_game",
+                                                              "Stadium Type" = "roof",
+                                                              "Field Surface" = "surface",
+                                                              "Temperature" = "temp",
+                                                              "Wind" = "wind"
+                                                          ),
+                                                          multiple = TRUE,
+                                                          options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+                                              ),
+                                              br(),
+                                              sliderInput(inputId = "cross_validation_folds",
+                                                          label = "Number of folds for cross validation to select model",
+                                                          min = 3,
+                                                          max = 10,
+                                                          value = 5
+                                              ),
+                                              hr(),
+                                              actionBttn(inputId = "fit_models",
+                                                         label = "Fit models"
+                                              ),
+                                              br(),
+                                              h6("Model fit may take a few minutes")
+                                          )
+                                   ),
+                                   column(width = 8,
+                                          box(title = strong("Model Statistics"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              h3("Training Data Fit Statistics"),
+                                              DT::dataTableOutput("model_statistics"),
+                                              br(),
+                                              h3("Test Data Fit Statistics"),
+                                              DT::dataTableOutput("test_statistics")
+                                          )
+                                   )
+                               )
                            )
                 ),
+                # ========= Prediction Tab ===============
                 bs4TabItem(tabName = "prediction",
                            fluidPage(
-                               h1("Prediction")
+                               h1("Prediction"),
+                               hr(),
+                               fluidRow(
+                                   column(width = 4,
+                                          box(title = strong("Prediction Inputs"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                              radioGroupButtons(inputId = "prediction_model",
+                                                                label = "Please select model for prediction",
+                                                                choices = list(
+                                                                    "Linear Regression" = "linear_regression",
+                                                                    "Regression Tree" = "regression_tree",
+                                                                    "Random Forest" = "random_forest"
+                                                                ),
+                                                                checkIcon = list(
+                                                                    yes = icon("ok", lib = "glyphicon")
+                                                                ),
+                                                                direction = "vertical"
+                                              ),
+                                              br(),
+                                              uiOutput("prediction_variables"),
+                                              br(),
+                                              conditionalPanel(condition = "'season' %in% input.model_variables",
+                                                               h5("worked")
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'game_type'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'weekday'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'away_team'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'overtime'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'away_rest'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'spread_line'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'total_line'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'under_odds'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'div_game'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'roof'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'surface'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'temp'"
+                                              ),
+                                              conditionalPanel(condition = "input.model_variables == 'wind'"
+                                              ),
+                                              hr(),
+                                              actionBttn(inputId = "run_prediction",
+                                                         label = "Generate prediction"
+                                              )
+                                          )
+                                   ),
+                                   column(width = 8,
+                                          box(title = strong("Prediction Output"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3
+                                          )
+                                   )
+                               )
                            )
                 )
             ) # end bs4Tabitems

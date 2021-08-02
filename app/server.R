@@ -20,6 +20,9 @@ library(DT)
 library(readr)
 library(plotly)
 
+## The Different sections of code may be examined individually by condensing the chunk with the heart button on the left next to 
+## the code line number
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
     # ========= Homepage / Navbar ==========
@@ -35,13 +38,16 @@ shinyServer(function(input, output, session) {
     # ========= Data Tab ===================
     game.df <- read.csv("../games.csv")
     game.df <- as.data.frame(game.df)
-    game.df <- game.df %>% filter(season != 2021)
+    game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
+    game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
+    game.df <- game.df[complete.cases(game.df), ]
+    game.df$roof <- droplevels(game.df$roof)
     game.df$game_id <- as.character(game.df$game_id)
     game.df$gameday <- as.character(game.df$gameday)
     game.df$season <- as_factor(game.df$season)
-    levels(game.df$season) <- list("1999" = 1, "2000" = 2, "2001" = 3, "2002" = 4, "2003" = 5, "2004" = 6, "2005" = 7, "2006" = 8,
-                                   "2007" = 9, "2008" = 10, "2009" = 11, "2010" = 12, "2011" = 13, "2012" = 14, "2013" = 15, "2014" = 16,
-                                   "2015" = 17, "2016" = 18, "2017" = 19, "2018" = 20, "2019" = 21, "2020" = 22)
+    # levels(game.df$season) <- list("1999" = 1, "2000" = 2, "2001" = 3, "2002" = 4, "2003" = 5, "2004" = 6, "2005" = 7, "2006" = 8,
+    #                                "2007" = 9, "2008" = 10, "2009" = 11, "2010" = 12, "2011" = 13, "2012" = 14, "2013" = 15, "2014" = 16,
+    #                                "2015" = 17, "2016" = 18, "2017" = 19, "2018" = 20, "2019" = 21, "2020" = 22)
     game.df$game_type <- relevel(game.df$game_type, "REG", "WC", "DIV", "CON", "SB")
     game.df$gametime <- as.character(game.df$gametime)
     game.df$away_qb_id <- as.character(game.df$away_qb_id)
@@ -58,9 +64,6 @@ shinyServer(function(input, output, session) {
     levels(game.df$overtime) <- list("Yes" = 1, "No" = 0)
     game.df$div_game <- as_factor(game.df$div_game)
     levels(game.df$div_game) <- list("Yes" = 1, "No" = 0)
-    game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
-    game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
-    game.df$roof <- droplevels(game.df$roof)
     
     # Column Filter UI
     output$column.filter <- renderUI({
@@ -324,8 +327,81 @@ shinyServer(function(input, output, session) {
                         multiple = TRUE,
                         options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
             )
+        }else if(input$plot_type == "histogram"){
+            pickerInput(inputId = "histogram_filter_variable",
+                        label = "Please select variable to filter by",
+                        choices = list(
+                            "Season" = "season",
+                            "Game Type" = "game_type",
+                            "Weekday" = "weekday",
+                            "Away Team" = "away_team",
+                            "Home Team" = "home_team",
+                            "Overtime" = "overtime",
+                            "Division Game" = "div_game",
+                            "Roof" = "roof",
+                            "Surface" = "surface"
+                        ),
+                        options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+            )
+        }else if(input$plot_type == "boxplot"){
+            pickerInput(inputId = "boxplot_filter_variable",
+                        label = "Please select variable to filter by",
+                        choices = list(
+                            "Season" = "season",
+                            "Game Type" = "game_type",
+                            "Weekday" = "weekday",
+                            "Away Team" = "away_team",
+                            "Home Team" = "home_team",
+                            "Overtime" = "overtime",
+                            "Division Game" = "div_game",
+                            "Roof" = "roof",
+                            "Surface" = "surface"
+                        ),
+                        options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+            )
+        }else if(input$plot_type == "scatter"){
+            pickerInput(inputId = "scatter_filter_variable",
+                        label = "Please select variable to filter by",
+                        choices = list(
+                            "Season" = "season",
+                            "Game Type" = "game_type",
+                            "Weekday" = "weekday",
+                            "Away Team" = "away_team",
+                            "Home Team" = "home_team",
+                            "Overtime" = "overtime",
+                            "Division Game" = "div_game",
+                            "Roof" = "roof",
+                            "Surface" = "surface"
+                        ),
+                        options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+            )
         }
-    }) 
+    })
+    
+    output$visual_filter_rows <- renderUI({
+        if(input$plot_type == "histogram"){
+            pickerInput(inputId = "histogram_filter_rows",
+                        label = "Please select rows to filter by",
+                        choices = levels(game.df[[input$histogram_filter_variable]]),
+                        multiple = TRUE,
+                        options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+            )
+        }else if(input$plot_type == "boxplot"){
+            pickerInput(inputId = "boxplot_filter_rows",
+                        label = "Please select rows to filter by",
+                        choices = levels(game.df[[input$boxplot_filter_variable]]),
+                        multiple = TRUE,
+                        options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+            )
+        }else if(input$plot_type == "scatter"){
+            pickerInput(inputId = "scatter_filter_rows",
+                        label = "Please select rows to filter by",
+                        choices = levels(game.df[[input$scatter_filter_variable]]),
+                        multiple = TRUE,
+                        options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+            )
+        }
+    })
     # Visual plot
     output$visual_output <- renderPlotly({
         if(input$plot_type == "bar"){
@@ -344,6 +420,7 @@ shinyServer(function(input, output, session) {
                     nrow_var <- nrow(bar.df[bar.df[[input$bar_variable]] == j, ])
                     bar_nrow <- c(bar_nrow, nrow_var)
                 }
+                #ggplot(data = bar.df, aes(x = bar.df[[input$bar_variable]])) + geom_bar()
                 plot_ly(x = levels(bar.df[[input$bar_variable]]), y = bar_nrow, type = "bar") %>%
                     layout(xaxis = list(title = input$bar_variable), yaxis = list(title = "Number of Games"))
             }else{
@@ -352,28 +429,229 @@ shinyServer(function(input, output, session) {
                     nrow_var <- nrow(bar.df[bar.df[[input$bar_variable]] == j, ])
                     bar_nrow <- c(bar_nrow, nrow_var)
                 }
+                #ggplot(data = bar.df, aes(x = bar.df[[input$bar_variable]])) + geom_bar()
                 plot_ly(x = levels(bar.df[[input$bar_variable]]), y = bar_nrow, type = "bar") %>%
-                    layout(xaxis = list(title = input$bar_variable), yaxis = list(title = "Number of Games"))
+                    layout(xaxis = list(title = input$bar_variable), yaxis = list(title = "Number of Games")) 
             }
         }else if(input$plot_type == "histogram"){
             hist.df <- game.df
-            if(input$visual_filter){
-                
+            if(input$switch_visual_filter){
+                validate(
+                    need(input$histogram_filter_rows, "Please select rows to filter by")
+                )
+                hist.df <- hist.df[hist.df[[input$histogram_filter_variable]] %in% input$histogram_filter_rows, ]
+                plot_ly(data = hist.df, x = hist.df[[input$histogram_variables]], type = "histogram", nbinsx = 30) %>%
+                    layout(xaxis = list(title = input$histogram_variables), yaxis = list(title = "Number of Games"))
             }else{
-                plot_ly(data = hist.df, x = hist.df[input$histogram_variables], type = "histogram")
+                #ggplot(data = hist.df, aes(x = hist.df[[input$histogram_variables]])) + geom_histogram()
+                plot_ly(data = hist.df, x = hist.df[[input$histogram_variables]], type = "histogram", nbinsx = 30) %>%
+                    layout(xaxis = list(title = input$histogram_variables), yaxis = list(title = "Number of Games"))
             }
         }else if(input$plot_type == "boxplot"){
-            if(input$visual_filter){
-                
+            box.df <- game.df
+            if(input$switch_visual_filter){
+                validate(
+                    need(input$boxplot_filter_rows, "Please select rows to filter by")
+                )
+                box.df <- box.df[box.df[[input$boxplot_filter_variable]] %in% input$boxplot_filter_rows, ]
+                plot_ly(data = box.df, x = box.df[[input$boxplot_discrete_variables]], y = box.df[[input$boxplot_continuous_variable]], type = "box") %>%
+                    layout(xaxis = list(title = input$boxplot_discrete_variables), yaxis = list(title = input$boxplot_continuous_variable))
             }else{
-                
+                plot_ly(data = box.df, x = box.df[[input$boxplot_discrete_variables]], y = box.df[[input$boxplot_continuous_variable]], type = "box") %>%
+                    layout(xaxis = list(title = input$boxplot_discrete_variables), yaxis = list(title = input$boxplot_continuous_variable))
             }
         }else{
-            if(input$visual_filter){
-                
+            scatter.df <- game.df
+            if(input$switch_visual_filter){
+                validate(
+                    need(input$scatter_filter_rows, "Please select rows to filter by")
+                )
+                scatter.df <- scatter.df[scatter.df[[input$scatter_filter_variable]] %in% input$scatter_filter_rows, ]
+                plot_ly(data = scatter.df, x = scatter.df[[input$scatter_variable1]], y = scatter.df[[input$scatter_variable2]], type = "scatter", mode = "markers",
+                        text = paste("Home Team:", scatter.df[["home_team"]], '<br>', "Away Team:", scatter.df[["away_team"]], '<br>', input$scatter_variable1, "=", scatter.df[[input$scatter_variable1]], '<br>', input$scatter_variable2, "=", scatter.df[[input$scatter_variable2]])) %>%
+                    layout(xaxis = list(title = input$scatter_variable1), yaxis = list(title = input$scatter_variable2))
             }else{
-                
+                # plot_ly(data = scatter.df, x = scatter.df[[input$scatter_variable1]], y = scatter.df[[input$scatter_variable2]], type = "scatter", mode = "markers",
+                #         text = paste("Home Team:", scatter.df[["home_team"]], '<br>', "Away Team:", scatter.df[["away_team"]], '<br>', input$scatter_variable1, "=", scatter.df[[input$scatter_variable1]], '<br>', input$scatter_variable2, "=", scatter.df[[input$scatter_variable2]])) %>%
+                #     layout(xaxis = list(title = input$scatter_variable1), yaxis = list(title = input$scatter_variable2))
+                plot_ly(data = scatter.df, x = reformulate(input$scatter_variable1), y = reformulate(input$scatter_variable2), type = "scatter", mode = "markers",
+                        text = paste("Home Team:", scatter.df[["home_team"]], '<br>', "Away Team:", scatter.df[["away_team"]], '<br>', input$scatter_variable1, "=", scatter.df[[input$scatter_variable1]], '<br>', input$scatter_variable2, "=", scatter.df[[input$scatter_variable2]])) %>%
+                    layout(xaxis = list(title = input$scatter_variable1), yaxis = list(title = input$scatter_variable2))
             }
         }
     }) # end visual filter
+    # ============= Model Info ===============
+    
+    # ============= Model Fitting ============
+    data_split <- eventReactive(input$fit_models, {
+        input$data_split
+    })
+    
+    cross_validation_folds <- eventReactive(input$fit_models, {
+        input$cross_validation_folds
+    })
+    
+    model_variables <- eventReactive(input$fit_models, {
+        input$model_variables
+    })
+    
+    train_vec <- reactive({
+        set.seed(52)
+        sample(1:nrow(game.df), size = nrow(game.df)*data_split())
+    })
+    test_vec <- reactive({
+        set.seed(52)
+        dplyr::setdiff(1:nrow(game.df), train_vec())
+    })
+    game.df.train <- reactive({
+        game.df[train_vec(), ]
+    })
+    game.df.test <- reactive({
+        game.df[test_vec(), ]
+    })
+    
+    lm_fit <- reactive({
+        set.seed(52)
+        train_control <- trainControl(method = "cv", number = cross_validation_folds())
+        model_formula <- reformulate(termlabels = model_variables(), response = "total")
+        lm_fit <- train(model_formula, data = game.df.train(),
+                        method = "lm",
+                        trControl = train_control)
+        lm_fit
+    })
+    
+    rt_fit <- reactive({
+        set.seed(52)
+        train_control <- trainControl(method = "cv", number = cross_validation_folds())
+        model_formula <- reformulate(termlabels = model_variables(), response = "total")
+        rt_fit <- train(model_formula, data = game.df.train(),
+                        method = "rpart",
+                        trControl = train_control)
+        rt_fit
+    })
+    
+    rf_fit <- reactive({
+        set.seed(52)
+        train_control <- trainControl(method = "cv", number = cross_validation_folds())
+        model_formula <- reformulate(termlabels = model_variables(), response = "total")
+        rf_fit <- train(model_formula, data = game.df.train(),
+                        method = "rf",
+                        trControl = train_control)
+        rf_fit
+    })
+    
+    # lm_fit <- function(data, model, train){
+    #     set.seed(52)
+    #     # train <- sample(1:nrow(game.df), size = nrow(game.df)*data_split)
+    #     # test <- dplyr::setdiff(1:nrow(game.df), train)
+    #     # game.df.train <- game.df[train, ]
+    #     # game.df.test <- game.df[test, ]
+    #     # train_control <- trainControl(method = "cv", number = cross_validation_folds)
+    #     # model_formula <- reformulate(termlabels = model_variables, response = "total")
+    #     lm_fit <- train(model, data = data,
+    #                     method = "lm",
+    #                     trControl = train)
+    #     lm_fit
+    # }
+    # 
+    # rt_fit <- function(data, model, train){
+    #     set.seed(52)
+    #     # train <- sample(1:nrow(game.df), size = nrow(game.df)*data_split)
+    #     # test <- dplyr::setdiff(1:nrow(game.df), train)
+    #     # game.df.train <- game.df[train, ]
+    #     # game.df.test <- game.df[test, ]
+    #     # train_control <- trainControl(method = "cv", number = cross_validation_folds)
+    #     # model_formula <- reformulate(termlabels = model_variables, response = "total")
+    #     rt_fit <- train(model, data = data,
+    #                     method = "rpart",
+    #                     trControl = train)
+    #     rt_fit
+    # }
+    # 
+    # rf_fit <- function(data, model, train){
+    #     set.seed(52)
+    #     # train <- sample(1:nrow(game.df), size = nrow(game.df)*data_split)
+    #     # test <- dplyr::setdiff(1:nrow(game.df), train)
+    #     # game.df.train <- game.df[train, ]
+    #     # game.df.test <- game.df[test, ]
+    #     # train_control <- trainControl(method = "cv", number = cross_validation_folds)
+    #     # model_formula <- reformulate(termlabels = model_variables, response = "total")
+    #     rf_fit <- train(model, data = data,
+    #                     method = "rf",
+    #                     trControl = train)
+    #     rf_fit
+    # }
+    
+    output$model_statistics <- DT::renderDataTable(
+        options = list(paging = FALSE, searching = FALSE),{
+        validate(
+            need(model_variables(), "Please select predictor variables")
+        )
+        
+        # Fit linear model
+        lm_results <- lm_fit()$results
+        lm_RMSE <- round(lm_results[["RMSE"]], 4)
+        lm_Rsquared <- round(lm_results[["Rsquared"]], 4)
+        
+        # Fit regression tree
+        rt_results <- rt_fit()$results
+        rt_RMSE <- round(rt_fit()$results[rt_fit()$results["cp"] == rt_fit()$finalModel$tuneValue[["cp"]], ][["RMSE"]] ,4)
+        rt_Rsquared <- round(rt_fit()$results[rt_fit()$results["cp"] == rt_fit()$finalModel$tuneValue[["cp"]], ][["Rsquared"]], 4)
+        
+        # Fit random forest model
+        rf_results <- rf_fit()$results
+        rf_RMSE <- round(rf_fit()$results[rf_fit()$results["mtry"] == rf_fit()$finalModel$tuneValue[["mtry"]], ][["RMSE"]], 4)
+        rf_Rsquared <- round(rf_fit()$results[rf_fit()$results["mtry"] == rf_fit()$finalModel$tuneValue[["mtry"]], ][["Rsquared"]], 4)
+        
+        model_statistics <- data.frame(
+            RMSE = c(lm_RMSE, rt_RMSE, rf_RMSE), Rsquared = c(lm_Rsquared, rt_Rsquared, rf_Rsquared),
+            row.names = c("Linear Regression", "Regression Tree", "Random Forest")
+        )
+        model_statistics
+    })
+    
+    output$test_statistics <- DT::renderDataTable(
+        options = list(paging = FALSE, searching = FALSE),{
+        set.seed(52)
+        lm_pred <- predict(lm_fit(), newdata = game.df.test())
+        lm_test_stat <- postResample(lm_pred, game.df.test()$total)
+        rt_pred <- predict(rt_fit(), newdata = game.df.test())
+        rt_test_stat <- postResample(rt_pred, game.df.test()$total)
+        rf_pred <- predict(rf_fit(), newdata = game.df.test())
+        rf_test_stat <- postResample(rf_pred, game.df.test()$total)
+        test_statistics <- data.frame(rbind(lm_test_stat, rt_test_stat, rf_test_stat), row.names = c("Linear Regression", "Regression Tree", "Random Forest"))
+        round(test_statistics, 4)
+    })
+    
+    # ============= Prediction ===============
+    # Render UI outputs for predictor variables
+    # output$predictor_variables <- renderUI({
+    #     pickerInput(inputId = "prediction_variables",
+    #                 label = "Please select predictor variables",
+    #                 choices = model_variables(),
+    #                 multiple = TRUE,
+    #                 options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+    #     )
+    # })
+    output$prediction_variables <- renderUI({
+        if("season" %in% input$model_variables){
+            pickerInput(inputId = "season_predictor",
+                        label = "Please select season predictor",
+                        choices = levels(game.df$season)
+            )
+        }
+        if("game_type" %in% input$model_variables){
+            pickerInput(inputId = "game_type_predictor",
+                        label = "Please select game type predictor",
+                        choices = levels(game.df$season)
+            )
+        }
+    })
+    
+    output$season_predictor <- renderUI({
+        pickerInput(inputId = "season_predictor",
+                    label = "Please select season predictor",
+                    choices = levels(game.df$season)
+        )
+    })
 })
