@@ -11,7 +11,7 @@ The data tab allows the user to explore the dataset with options to filter the d
 ## Data Exploration Tab
 The data exploration tab allows the user to conduct an exploratory data analysis (EDA) of the data. The tab is broken into two sections, one for contingency and summary tables, the other for creating visuals. The contingency table displays the number of games for the selected input variable. The user may create a two dimensional contigency table by clicking the "Add variable" switch and selecting their desired variable. A summary table that displays the five number summary along with the mean and standard deviation can be generated for some of the continuous variables in the dataset. These summaries of the different variables can be compared by selecting multiple variables in the dropdown menu.
 
-The visuals section of this tab allows the user to create 
+The visuals section of this tab allows the user to create plots based on the selections in the "Visual Inputs" box. One of four possible plots can be generated including a box chart, histogram, box plot, and scatter plot.
 
 ## Modeling Tabs
 ### Modeling Info Tab

@@ -220,18 +220,14 @@ shinyServer(function(input, output, session) {
     })
     
     observeEvent(input$save.data, {
-        # Check for data file title and if blank save as NFL Games Data.csv
-        if(input$data.title == ""){
-            file.title <- "NFL Games Data"
-        }else{
-            file.title <- input$data.title
-        }
-        write_csv(column.filter.df(), file = paste0(file.title, ".csv"))
-        withProgress(message = "Saving data...", value = 0,{
-            for(n in 1:10){
-                incProgress(1/10)
-                Sys.sleep(0.1)
+        output$saved_data <- downloadHandler({
+            # Check for data file title and if blank save as NFL Games Data.csv
+            if(input$data.title == ""){
+                file.title <- "NFL Games Data"
+            }else{
+                file.title <- input$data.title
             }
+            write_csv(filter.df(), file = paste0(file.title, ".csv"))
         })
     })
     

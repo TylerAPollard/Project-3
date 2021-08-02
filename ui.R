@@ -102,12 +102,18 @@ shinyUI(
                                ), # end Data Filter box
                                # Data table box
                                box(title = strong("Data"), collapsible = FALSE, closable = FALSE, maximizable = TRUE, status = "warning", solidHeader = TRUE, width = 12, 
-                                   label = strong("Save Data"),
-                                   dropdownMenu = boxDropdown(icon = icon("save"),
-                                                              boxDropdownItem(textInput(inputId = "data.title", label = "Name of data file")),
-                                                              boxDropdownItem(actionBttn(inputId = "save.data", label = "Save Data", icon = icon("save")))
+                                    #label = strong("Save Data"),
+                                   # dropdownMenu = boxDropdown(icon = icon("save"),
+                                   #                            boxDropdownItem(textInput(inputId = "data.title", label = "Name of data file")),
+                                   #                            boxDropdownItem(downloadButton("save.data", label = "Save Data", icon = icon("save")))
+                                   # ),
+                                   fluidRow(
+                                       column(width = 5),
+                                       column(width = 7,
+                                           downloadButton("save.data", label = "Save Data", icon = icon("save"), align = "right")
+                                       )
                                    ),
-                                   # actionBttn(inputId = "save.data", label = "Save Data", icon = icon("save")), align = "right",
+                                   br(),
                                    fluidRow(
                                        column(width =12,
                                               DT::dataTableOutput(outputId = "data.table")
