@@ -45,7 +45,13 @@ shinyUI(
         bs4DashBody(
             bs4TabItems(
                 # ========= About Tab ==============
-                bs4TabItem(tabName = "about"),
+                bs4TabItem(tabName = "home",
+                           h1("Welcome to the NFL Game Dashboard", align  = "center"),
+                           br(),
+                           box(width = 12, closable = FALSE, collapsible = FALSE, headerBorder = FALSE,
+                               includeMarkdown("Description.Rmd")
+                               )
+                ),
                 # ========= Data Tab ===============
                 bs4TabItem(tabName = "data",
                            fluidPage(
@@ -149,7 +155,7 @@ shinyUI(
                                                                                "Game Type" = "game_type",
                                                                                "Weekday" = "weekday",
                                                                                "Away Team" = "away_team",
-                                                                               "Home Team" = "away_team",
+                                                                               "Home Team" = "home_team",
                                                                                "Overtime" = "overtime",
                                                                                "Division Game" = "div_game",
                                                                                "Roof" = "roof",

@@ -121,8 +121,9 @@ game.df.train <- game.df[train, ]
 game.df.test <- game.df[test, ]
 train_control <- trainControl(method = "cv", number = 5)
 lm_variables1 <- c("season", "game_type","weekday", "away_team", "home_team", "overtime", "away_rest", "spread_line", "total_line", "under_odds", "div_game", "roof", "surface", "temp", "wind")
+lm_variables2 <- c("overtime", "spread_line", "total_line", "div_game", "temp", "wind")
 lm_variables <- c("overtime", "total_line", "div_game", "temp", "wind")
-model <- reformulate(termlabels = lm_variables1, response = "total")
+model <- reformulate(termlabels = lm_variables2, response = "total")
 step(lm(model, game.df.train), direction = "backward")
 set.seed(52)
 lm_fit <- train(model, data = game.df.train, 
@@ -171,17 +172,25 @@ rownames(model_statistics) <- c("Linear Regression", "Regression Tree", "Random 
 test_statistics <- rbind(lm_test_stat, rt_test_stat, rf_test_stat)
 
 # Prediction
-pred.df <- game.df[-(1:nrow(game.df)), ]
-pred.df$season[1] <- "2000"
-pred.df$game_type[1] <- "REG"
+pred.df <- data.frame()
+pred.df <- game.df[-(2:nrow(game.df)), ]
+pred.df$season <- "2006"
+pred.df$game_type <- "REG"
 pred.df$weekday[1] <- "Sunday"
-pred.df$away_team[1] <- "BAL"
-pred.df$overtime[1] <- "Yes"
-pred.df$away_rest[1] <- 7
-pred.df$spread_line[1] <- -4.5
-pred.df$under_odds[1] <- -110
-pred.df$div_game[1] <- "Yes"
+pred.df$away_team[1] <- "ATL"
+pred.df$overtime[1] <- "No"
+pred.df$away_rest[1] <- 14
+pred.df$spread_line[1] <- 14
+pred.df$total_line <- 55
+pred.df$under_odds[1] <- -130
+pred.df$div_game[1] <- "No"
 pred.df$roof[1] <- "outdoors"
 pred.df$surface[1] <- "grass"
-pred.df$temp[1] <- 72
-pred.df$wind[1] <- 5
+pred.df$temp[1] <- 80
+pred.df$wind[1] <- 0
+
+predict(lm_fit, newdata = pred.df)
+predict(rt_fit, newdata = pred.df)
+predict(rf_fit, newdata = pred.df)
+
+resamps <- resamples(list(LM = lm_fit, RT = rt_fit, RF = rf_fit))

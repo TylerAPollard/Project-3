@@ -237,11 +237,16 @@ shinyServer(function(input, output, session) {
     
     # ============ Data Exploration Tab ======================
     ## Contigency Tables
-    output$contingency.table <- renderTable(options = list(scrollX = TRUE),{
+    output$contingency.table <- renderTable({
+        #extensions = "FixedColumns",
+        #options = list(paging = FALSE, searching = FALSE, rownames = FALSE, scrollX = TRUE, autoWidth = TRUE, fixedColumns = list(leftColumns = 2), columnDefs = list(list(width = '100px', targets = "_all"))),{
         validate(
             need(input$contingency_variable1, "Please select variable for contingency table")
         )
         if(input$switch_contingency_filter){
+            validate(
+                need(input$contingency_variable1 != input$contingency_variable2, "Please select different variables for table")
+            )
             contingency.table <- table(game.df[[input$contingency_variable1]], game.df[[input$contingency_variable2]])
             contingency.table <- as.data.frame(contingency.table)
             colnames(contingency.table) <- c(input$contingency_variable1, input$contingency_variable2, "Frequency")
@@ -540,48 +545,6 @@ shinyServer(function(input, output, session) {
         rf_fit
     })
     
-    # lm_fit <- function(data, model, train){
-    #     set.seed(52)
-    #     # train <- sample(1:nrow(game.df), size = nrow(game.df)*data_split)
-    #     # test <- dplyr::setdiff(1:nrow(game.df), train)
-    #     # game.df.train <- game.df[train, ]
-    #     # game.df.test <- game.df[test, ]
-    #     # train_control <- trainControl(method = "cv", number = cross_validation_folds)
-    #     # model_formula <- reformulate(termlabels = model_variables, response = "total")
-    #     lm_fit <- train(model, data = data,
-    #                     method = "lm",
-    #                     trControl = train)
-    #     lm_fit
-    # }
-    # 
-    # rt_fit <- function(data, model, train){
-    #     set.seed(52)
-    #     # train <- sample(1:nrow(game.df), size = nrow(game.df)*data_split)
-    #     # test <- dplyr::setdiff(1:nrow(game.df), train)
-    #     # game.df.train <- game.df[train, ]
-    #     # game.df.test <- game.df[test, ]
-    #     # train_control <- trainControl(method = "cv", number = cross_validation_folds)
-    #     # model_formula <- reformulate(termlabels = model_variables, response = "total")
-    #     rt_fit <- train(model, data = data,
-    #                     method = "rpart",
-    #                     trControl = train)
-    #     rt_fit
-    # }
-    # 
-    # rf_fit <- function(data, model, train){
-    #     set.seed(52)
-    #     # train <- sample(1:nrow(game.df), size = nrow(game.df)*data_split)
-    #     # test <- dplyr::setdiff(1:nrow(game.df), train)
-    #     # game.df.train <- game.df[train, ]
-    #     # game.df.test <- game.df[test, ]
-    #     # train_control <- trainControl(method = "cv", number = cross_validation_folds)
-    #     # model_formula <- reformulate(termlabels = model_variables, response = "total")
-    #     rf_fit <- train(model, data = data,
-    #                     method = "rf",
-    #                     trControl = train)
-    #     rf_fit
-    # }
-    
     output$model_statistics <- DT::renderDataTable(
         options = list(paging = FALSE, searching = FALSE),{
         validate(
@@ -625,16 +588,8 @@ shinyServer(function(input, output, session) {
     
     # ============= Prediction ===============
     # Render UI outputs for predictor variables
-    # output$predictor_variables <- renderUI({
-    #     pickerInput(inputId = "prediction_variables",
-    #                 label = "Please select predictor variables",
-    #                 choices = model_variables(),
-    #                 multiple = TRUE,
-    #                 options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
-    #     )
-    # })
     output$season_predictor <- renderUI({
-        if("season" %in% input$model_variables){
+        if("season" %in% model_variables()){
             pickerInput(inputId = "season_predictor",
                         label = "Please select season predictor",
                         choices = levels(game.df$season)
@@ -642,7 +597,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$game_type_predictor <- renderUI({
-        if("game_type" %in% input$model_variables){
+        if("game_type" %in% model_variables()){
             pickerInput(inputId = "game_type_predictor",
                         label = "Please select game type predictor",
                         choices = levels(game.df$game_type)
@@ -650,7 +605,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$weekday_predictor <- renderUI({
-        if("weekday" %in% input$model_variables){
+        if("weekday" %in% model_variables()){
             pickerInput(inputId = "weekday_predictor",
                         label = "Please select weekday predictor",
                         choices = levels(game.df$weekday)
@@ -658,7 +613,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$team_predictor <- renderUI({
-        if("away_team" %in% input$model_variables){
+        if("away_team" %in% model_variables()){
             pickerInput(inputId = "team_predictor",
                         label = "Please select team predictor",
                         choices = levels(game.df$away_team)
@@ -666,7 +621,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$overtime_predictor <- renderUI({
-        if("overtime" %in% input$model_variables){
+        if("overtime" %in% model_variables()){
             pickerInput(inputId = "overtime_predictor",
                         label = "Please select overtime predictor",
                         choices = levels(game.df$overtime)
@@ -674,7 +629,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$rest_predictor <- renderUI({
-        if("away_rest" %in% input$model_variables){
+        if("away_rest" %in% model_variables()){
             sliderInput(inputId = "rest_predictor",
                         label = "Please select rest predictor",
                         min = 4,
@@ -685,7 +640,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$spread_line_predictor <- renderUI({
-        if("spread_line" %in% input$model_variables){
+        if("spread_line" %in% model_variables()){
             sliderInput(inputId = "spread_line_predictor",
                         label = "Please select spread line predictor",
                         min = -30,
@@ -696,7 +651,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$total_line_predictor <- renderUI({
-        if("total_line" %in% input$model_variables){
+        if("total_line" %in% model_variables()){
             numericInput(inputId = "total_line_predictor",
                         label = "Please select total line predictor",
                         min = 20,
@@ -707,7 +662,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$odds_predictor <- renderUI({
-        if("under_odds" %in% input$model_variables){
+        if("under_odds" %in% model_variables()){
             sliderTextInput(inputId = "odds_predictor",
                         label = "Please select odds predictor",
                         choices = c(seq(-130, -100, by = 1), seq(100, 130, by = 1)),
@@ -716,7 +671,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$div_game_predictor <- renderUI({
-        if("div_game" %in% input$model_variables){
+        if("div_game" %in% model_variables()){
             pickerInput(inputId = "div_game_predictor",
                         label = "Please select division predictor",
                         choices = levels(game.df$div_game)
@@ -724,7 +679,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$roof_predictor <- renderUI({
-        if("roof" %in% input$model_variables){
+        if("roof" %in% model_variables()){
             pickerInput(inputId = "roof_predictor",
                         label = "Please select roof predictor",
                         choices = levels(game.df$roof)
@@ -732,7 +687,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$surface_predictor <- renderUI({
-        if("surface" %in% input$model_variables){
+        if("surface" %in% model_variables()){
             pickerInput(inputId = "surface_predictor",
                         label = "Please select surface predictor",
                         choices = levels(game.df$surface)
@@ -740,7 +695,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$temp_predictor <- renderUI({
-        if("temp" %in% input$model_variables){
+        if("temp" %in% model_variables()){
             numericInput(inputId = "temp_predictor",
                          label = "Please select temperature predictor",
                          min = -20,
@@ -751,7 +706,7 @@ shinyServer(function(input, output, session) {
         }
     })
     output$wind_predictor <- renderUI({
-        if("wind" %in% input$model_variables){
+        if("wind" %in% model_variables()){
             numericInput(inputId = "wind_predictor",
                          label = "Please select wind speed predictor",
                          min = 0,
@@ -763,8 +718,8 @@ shinyServer(function(input, output, session) {
     })
     
     # Prediction
-    prediction_variables <- eventReactive(input$run_prediction, {
-        pred.df <- game.df[-(1:nrow(game.df)), ]
+    prediction.df <- eventReactive(input$run_prediction, {
+        pred.df <- game.df[-(2:nrow(game.df)), ]
         pred.df$season <- input$season_predictor
         pred.df$game_type <- input$game_type_predictor
         pred.df$weekday <- input$weekday_predictor
@@ -772,16 +727,28 @@ shinyServer(function(input, output, session) {
         pred.df$overtime <- input$overtime_predictor
         pred.df$away_rest <- input$rest_predictor
         pred.df$spread_line <- input$spread_line_predictor
+        pred.df$total_line <- input$total_line_predictor
         pred.df$under_odds <- input$odds_predictor
         pred.df$div_game <- input$div_game_predictor
         pred.df$roof <- input$roof_predictor
         pred.df$surface <- input$surface_predictor
         pred.df$temp <- input$temp_predictor
         pred.df$wind <- input$wind_predictor
+        pred.df
+    })
+    
+    prediction_model <- eventReactive(input$run_prediction, {
+        input$prediction_model
     })
     
     output$prediction_value <- renderText({
-        
-        paste0("The predicted total points is ", 45)
+        if(prediction_model() == "linear_regression"){
+            prediction <- predict(lm_fit(), newdata = prediction.df())
+        }else if(prediction_model() == "regression_tree"){
+            prediction <- predict(rt_fit(), newdata = prediction.df())
+        }else if(prediction_model() == "random_forest"){
+            prediction <- predict(rf_fit(), newdata = prediction.df())
+        }
+        paste0("The predicted total points is ", prediction)
     })
 })
