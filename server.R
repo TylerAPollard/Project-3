@@ -36,7 +36,7 @@ shinyServer(function(input, output, session) {
     })
     
     # ========= Data Tab ===================
-    game.df <- read.csv("../games.csv")
+    game.df <- read.csv("games.csv")
     game.df <- as.data.frame(game.df)
     game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
     game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
