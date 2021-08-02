@@ -20,6 +20,6 @@ library(readr)
 library(plotly)
 
 # Install required packages
-install.packages(c("shiny", "shinydashboard", "shinyWidgets", "tidyverse", "dplyr", "ggplot2", "caret", "fresh", "lubridate", "forcats", "knitr", "DT", "readr", "plotly"); devtools::install_github("bs4Dash)
+install.packages(c("shiny", "shinydashboard", "shinyWidgets", "tidyverse", "dplyr", "ggplot2", "caret", "fresh", "lubridate", "forcats", "knitr", "DT", "readr", "plotly")); devtools::install_github("bs4Dash)
 
 # Run Shiny app
