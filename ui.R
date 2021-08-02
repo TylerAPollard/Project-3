@@ -110,7 +110,7 @@ shinyUI(
                                    fluidRow(
                                        column(width = 5),
                                        column(width = 7,
-                                           downloadButton("save.data", label = "Save Data", icon = icon("save"), align = "right")
+                                           downloadButton("saved_data", label = "Save Data", icon = icon("save"), align = "right")
                                        )
                                    ),
                                    br(),

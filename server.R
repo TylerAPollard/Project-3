@@ -219,17 +219,16 @@ shinyServer(function(input, output, session) {
         }
     })
     
-    observeEvent(input$save.data, {
-        output$saved_data <- downloadHandler({
-            # Check for data file title and if blank save as NFL Games Data.csv
-            if(input$data.title == ""){
-                file.title <- "NFL Games Data"
-            }else{
-                file.title <- input$data.title
-            }
-            write_csv(filter.df(), file = paste0(file.title, ".csv"))
-        })
-    })
+    output$saved_data <- downloadHandler(
+        # Check for data file title and if blank save as NFL Games Data.csv
+        filename = function(){
+            paste0("NFL Game Data", ".csv")
+        },
+        content = function(file){
+            write_csv(filter.df(), file)
+        }
+    )
+    
     
     # ============ Data Exploration Tab ======================
     ## Contigency Tables
