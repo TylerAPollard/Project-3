@@ -194,3 +194,6 @@ predict(rt_fit, newdata = pred.df)
 predict(rf_fit, newdata = pred.df)
 
 resamps <- resamples(list(LM = lm_fit, RT = rt_fit, RF = rf_fit))
+
+${R}_{1}(j, s) = {x|x_{j}<s}$ and ${R}_{2}(j, s) = {x|x_{j}>= s}$ 
+${R}_{1} (j, s) = \{{x|x_{j} < s}\}$ and ${R}_{2} (j, s) = \{x|x_{j} >= s\}$
