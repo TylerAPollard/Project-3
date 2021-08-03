@@ -311,10 +311,10 @@ shinyServer(function(input, output, session) {
         for(i in colnames(summary.df)){
             sum.table <- summarise(summary.df[i],
                 Minimum = min(summary.df[[i]], na.rm = TRUE),
-                `1st Qu.` = quantile(summary.df[[i]], 0.25, na.rm = TRUE),
+                `1st Qu.` = quantile(summary.df[[i]], input$Q1, na.rm = TRUE),
                 Median = median(summary.df[[i]], na.rm = TRUE),
                 Mean = mean(summary.df[[i]], na.rm = TRUE),
-                `3rd Qu.` = quantile(summary.df[[i]], 0.75, na.rm = TRUE),
+                `3rd Qu.` = quantile(summary.df[[i]], input$Q3, na.rm = TRUE),
                 Maximum = max(summary.df[[i]],na.rm = TRUE),
                 `St. Dev.` = sd(summary.df[[i]],na.rm = TRUE)
             )
@@ -576,6 +576,21 @@ shinyServer(function(input, output, session) {
         model_statistics
     })
     
+    output$lm_sum <- renderPrint({
+        lm_sum <- summary(lm_fit())
+        lm_sum
+    })
+    
+    output$rt_sum <- renderPrint({
+        rt_sum <- summary(rt_fit)
+        rt_sum$frame
+    })
+    
+    output$rf_fit <- renderPrint({
+        rf_sum <- summary(rf_fit)
+        rf_sum
+    })
+    
     output$test_statistics <- DT::renderDataTable(
         options = list(paging = FALSE, searching = FALSE),{
         set.seed(52)
@@ -746,12 +761,12 @@ shinyServer(function(input, output, session) {
     
     output$prediction_value <- renderText({
         if(prediction_model() == "linear_regression"){
-            prediction <- predict(lm_fit(), newdata = prediction.df())
+            prediction <- round(predict(lm_fit(), newdata = prediction.df()), 2)
         }else if(prediction_model() == "regression_tree"){
-            prediction <- predict(rt_fit(), newdata = prediction.df())
+            prediction <- round(predict(rt_fit(), newdata = prediction.df()), 2)
         }else if(prediction_model() == "random_forest"){
-            prediction <- predict(rf_fit(), newdata = prediction.df())
+            prediction <- round(predict(rf_fit(), newdata = prediction.df()), 2)
         }
-        paste0("The predicted total points is ", prediction)
+        paste0("The predicted total points is ", (prediction))
     })
 })

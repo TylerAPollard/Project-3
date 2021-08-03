@@ -187,6 +187,18 @@ shinyUI(
                                                           multiple = TRUE,
                                                           options = pickerOptions(actionsBox = TRUE)
                                               ),
+                                              sliderInput(inputId = "Q1",
+                                                          label = "Select value for 1st Quantile",
+                                                          min = 0.10,
+                                                          max = 0.40,
+                                                          value = 0.25,
+                                                          step = 0.01),
+                                              sliderInput(inputId = "Q3",
+                                                          label = "Select value for 3rd Quantile",
+                                                          min = 0.60,
+                                                          max = 0.90,
+                                                          value = 0.75,
+                                                          step = 0.01),
                                               h6("Filter by row"),
                                               switchInput(inputId = "switch_summary_filter",
                                                           onStatus = "success",
@@ -371,7 +383,7 @@ shinyUI(
                                             )
                                         )
                                ),
-                               # ========= Model Fitting =============
+                # ========= Model Fitting =============
                                tabPanel(title = "Model Fit",
                                         fluidPage(
                                             h1("Model Fit"),
@@ -392,7 +404,6 @@ shinyUI(
                                                                        choices = list(
                                                                            "Season" = "season",
                                                                            "Game Type" = "game_type",
-                                                                           "Weekday" = "weekday",
                                                                            "Team" = "away_team",
                                                                            "Overtime" = "overtime",
                                                                            "Team Rest" = "away_rest",
@@ -428,6 +439,11 @@ shinyUI(
                                                            h3("Training Data Fit Statistics"),
                                                            DT::dataTableOutput("model_statistics"),
                                                            br(),
+                                                           h3("Linear Regression Summary"),
+                                                           verbatimTextOutput("lm_sum"),
+                                                           br(),
+                                                           #h3("Regression Tree Summary"),
+                                                           #verbatimTextOutput("rt_sum"),
                                                            h3("Test Data Fit Statistics"),
                                                            DT::dataTableOutput("test_statistics")
                                                        )
@@ -435,7 +451,7 @@ shinyUI(
                                             )
                                         )
                                ),
-                               # ========= Prediction Tab ===============
+                # ========= Prediction Tab ===============
                                tabPanel(title = "Prediction",
                                         fluidPage(
                                             h1("Prediction"),

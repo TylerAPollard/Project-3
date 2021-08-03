@@ -26,14 +26,14 @@ game.df$overtime <- as_factor(game.df$overtime)
 levels(game.df$overtime) <- list("Yes" = 1, "No" = 0)
 game.df$div_game <- as_factor(game.df$div_game)
 levels(game.df$div_game) <- list("Yes" = 1, "No" = 0)
-# for(i in 1:nrow(game.df)){
-#   if(game.df$total[i] > game.df$total_line[i]){
-#     game.df$total_outcome[i] <- "Over"
-#   }else{
-#     game.df$total_outcome[i] <- "Under"
-#   }
-# }
-# game.df$total_outcome <- as_factor(game.df$total_outcome)
+for(i in 1:nrow(game.df)){
+  if(game.df$total[i] > game.df$total_line[i]){
+    game.df$total_outcome[i] <- "Over"
+  }else{
+    game.df$total_outcome[i] <- "Under"
+  }
+}
+game.df$total_outcome <- as_factor(game.df$total_outcome)
 # game.df.totals <- game.df %>% select(total, total_line, total_outcome)
 
 # Contigency Table
@@ -123,17 +123,17 @@ train_control <- trainControl(method = "cv", number = 5)
 lm_variables1 <- c("season", "game_type","weekday", "away_team", "home_team", "overtime", "away_rest", "spread_line", "total_line", "under_odds", "div_game", "roof", "surface", "temp", "wind")
 lm_variables2 <- c("overtime", "spread_line", "total_line", "div_game", "temp", "wind")
 lm_variables <- c("overtime", "total_line", "div_game", "temp", "wind")
-model <- reformulate(termlabels = lm_variables2, response = "total")
-step(lm(model, game.df.train), direction = "backward")
+model <- reformulate(termlabels = lm_variables1, response = "total")
+step(glm(model, game.df.train), direction = "backward")
 set.seed(52)
 lm_fit <- train(model, data = game.df.train, 
-            method = "lm",
+            method = "glm",
             preProcess = c("center", "scale"),
             trControl = train_control
             )
 lm_results <- lm_fit$results
 lm_pred <- predict(lm_fit, newdata = game.df.test)
-lm_test_stat <- postResample(lm_pred, game.df.test$total)
+lm_test_stat <- postResample(lm_pred, game.df.test$total_outcome)
 
 set.seed(52)
 rt_fit <- train(model, data = game.df.train, 
@@ -143,7 +143,7 @@ rt_fit <- train(model, data = game.df.train,
 )
 rt_results <- rt_fit$results
 rt_pred <- predict(rt_fit, newdata = game.df.test)
-rt_test_stat <- postResample(rt_pred, game.df.test$total)
+rt_test_stat <- postResample(rt_pred, game.df.test$total_outcome)
 
 set.seed(52)
 rf_fit <- train(model, data = game.df.train, 
@@ -171,6 +171,10 @@ rownames(model_statistics) <- c("Linear Regression", "Regression Tree", "Random 
 
 test_statistics <- rbind(lm_test_stat, rt_test_stat, rf_test_stat)
 
+lm_sum <- summary(lm_fit)
+rt_sum <- summary(rt_fit)
+rf_sum <- summary(rf_fit)
+
 # Prediction
 pred.df <- data.frame()
 pred.df <- game.df[-(2:nrow(game.df)), ]
@@ -194,6 +198,8 @@ predict(rt_fit, newdata = pred.df)
 predict(rf_fit, newdata = pred.df)
 
 resamps <- resamples(list(LM = lm_fit, RT = rt_fit, RF = rf_fit))
+sum <- summary(resamps)
+data.frame(sum$values)
 
 ${R}_{1}(j, s) = {x|x_{j}<s}$ and ${R}_{2}(j, s) = {x|x_{j}>= s}$ 
 ${R}_{1} (j, s) = \{{x|x_{j} < s}\}$ and ${R}_{2} (j, s) = \{x|x_{j} >= s\}$
