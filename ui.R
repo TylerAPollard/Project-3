@@ -34,10 +34,10 @@ shinyUI(
                 bs4SidebarMenuItem(text = "Dashboard Home", tabName = "home", icon = icon("home")),
                 bs4SidebarMenuItem(text = "Data", tabName = "data", icon = icon("table")),
                 bs4SidebarMenuItem(text = "Data Exploration", tabName = "data_exploration", icon = icon("chart-area")),
-                bs4SidebarMenuItem(text = "Modeling", icon = icon("chart-line"),
-                                   bs4SidebarMenuSubItem(text = "Modeling Info", tabName = "model_info"),
-                                   bs4SidebarMenuSubItem(text = "Model Fitting", tabName = "model_fit"),
-                                   bs4SidebarMenuSubItem(text = "Prediction", tabName = "prediction")
+                bs4SidebarMenuItem(text = "Modeling", tabName = "modeling",icon = icon("chart-line")
+                                   # bs4SidebarMenuSubItem(text = "Model Info", tabName = "model_info"),
+                                   # bs4SidebarMenuSubItem(text = "Model Fitting", tabName = "model_fit"),
+                                   # bs4SidebarMenuSubItem(text = "Prediction", tabName = "prediction")
                                    )
             ) # close bs4sidebarMenu
         ), # close bs4Dashsidebar
@@ -49,8 +49,9 @@ shinyUI(
                            h1("Welcome to the NFL Game Dashboard", align  = "center"),
                            br(),
                            box(width = 12, closable = FALSE, collapsible = FALSE, headerBorder = FALSE,
+                               withMathJax(),
                                includeMarkdown("Description.Rmd")
-                               )
+                           )
                 ),
                 # ========= Data Tab ===============
                 bs4TabItem(tabName = "data",
@@ -102,7 +103,7 @@ shinyUI(
                                ), # end Data Filter box
                                # Data table box
                                box(title = strong("Data"), collapsible = FALSE, closable = FALSE, maximizable = TRUE, status = "warning", solidHeader = TRUE, width = 12, 
-                                    #label = strong("Save Data"),
+                                   #label = strong("Save Data"),
                                    # dropdownMenu = boxDropdown(icon = icon("save"),
                                    #                            boxDropdownItem(textInput(inputId = "data.title", label = "Name of data file")),
                                    #                            boxDropdownItem(downloadButton("save.data", label = "Save Data", icon = icon("save")))
@@ -110,7 +111,7 @@ shinyUI(
                                    fluidRow(
                                        column(width = 5),
                                        column(width = 7,
-                                           downloadButton("saved_data", label = "Save Data", icon = icon("save"), align = "right")
+                                              downloadButton("saved_data", label = "Save Data", icon = icon("save"), align = "right")
                                        )
                                    ),
                                    br(),
@@ -356,126 +357,136 @@ shinyUI(
                                )
                            )
                 ),
-                # ========== Modeling Tab ===============
-                bs4TabItem(tabName = "model_info",
-                           fluidPage(
-                               h1("Modeling Info"),
-                               hr()
-                           )
-                ),
-                bs4TabItem(tabName = "model_fit",
-                           fluidPage(
-                               h1("Model Fit"),
-                               hr(),
-                               fluidRow(
-                                   column(width = 4,
-                                          box(title = strong("Model Settings"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
-                                              sliderTextInput(inputId = "data_split",
-                                                              label = "Select proportion of data for training data set",
-                                                              choices = seq(0, 1, by = 0.05),
-                                                              selected = .8,
-                                                              from_min = .5,
-                                                              from_max = .95
-                                              ),
-                                              br(),
-                                              pickerInput(inputId = "model_variables",
-                                                          label = "Please select predictor variables",
-                                                          choices = list(
-                                                              "Season" = "season",
-                                                              "Game Type" = "game_type",
-                                                              "Weekday" = "weekday",
-                                                              "Team" = "away_team",
-                                                              "Overtime" = "overtime",
-                                                              "Team Rest" = "away_rest",
-                                                              "Spread Line" = "spread_line",
-                                                              "Total Line" = "total_line",
-                                                              "Total Odds" = "under_odds",
-                                                              "Divsion Game" = "div_game",
-                                                              "Stadium Type" = "roof",
-                                                              "Field Surface" = "surface",
-                                                              "Temperature" = "temp",
-                                                              "Wind" = "wind"
-                                                          ),
-                                                          multiple = TRUE,
-                                                          options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
-                                              ),
-                                              br(),
-                                              sliderInput(inputId = "cross_validation_folds",
-                                                          label = "Number of folds for cross validation to select model",
-                                                          min = 3,
-                                                          max = 10,
-                                                          value = 5
-                                              ),
-                                              hr(),
-                                              actionBttn(inputId = "fit_models",
-                                                         label = "Fit models"
-                                              ),
-                                              br(),
-                                              h6("Model fit may take a few minutes")
-                                          )
-                                   ),
-                                   column(width = 8,
-                                          box(title = strong("Model Statistics"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
-                                              h3("Training Data Fit Statistics"),
-                                              DT::dataTableOutput("model_statistics"),
-                                              br(),
-                                              h3("Test Data Fit Statistics"),
-                                              DT::dataTableOutput("test_statistics")
-                                          )
-                                   )
-                               )
-                           )
-                ),
-                # ========= Prediction Tab ===============
-                bs4TabItem(tabName = "prediction",
-                           fluidPage(
-                               h1("Prediction"),
-                               hr(),
-                               fluidRow(
-                                   column(width = 4,
-                                          box(title = strong("Prediction Inputs"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
-                                              radioGroupButtons(inputId = "prediction_model",
-                                                                label = "Please select model for prediction",
-                                                                choices = list(
-                                                                    "Linear Regression" = "linear_regression",
-                                                                    "Regression Tree" = "regression_tree",
-                                                                    "Random Forest" = "random_forest"
-                                                                ),
-                                                                checkIcon = list(
-                                                                    yes = icon("ok", lib = "glyphicon")
-                                                                ),
-                                                                direction = "vertical"
-                                              ),
-                                              br(),
-                                              uiOutput("season_predictor"),
-                                              uiOutput("game_type_predictor"),
-                                              uiOutput("weekday_predictor"),
-                                              uiOutput("team_predictor"),
-                                              uiOutput("overtime_predictor"),
-                                              uiOutput("rest_predictor"),
-                                              uiOutput("spread_line_predictor"),
-                                              uiOutput("total_line_predictor"),
-                                              uiOutput("odds_predictor"),
-                                              uiOutput("div_game_predictor"),
-                                              uiOutput("roof_predictor"),
-                                              uiOutput("surface_predictor"),
-                                              uiOutput("temp_predictor"),
-                                              uiOutput("wind_predictor"),
-                                              hr(),
-                                              actionBttn(inputId = "run_prediction",
-                                                         label = "Generate prediction"
-                                              )
-                                          )
-                                   ),
-                                   column(width = 8,
-                                          box(title = strong("Prediction Output"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
-                                              textOutput("prediction_value")
-                                          )
-                                   )
-                               )
-                           )
-                )
+                # ========== Model Info ===============
+                bs4TabItem(tabName = "modeling",
+                           tabsetPanel(
+                               tabPanel(title = "Model Info",
+                                        fluidPage(
+                                            h1("Model Info"),
+                                            hr(),
+                                            box(width = 12, closable = FALSE, collapsible = FALSE, headerBorder = FALSE,
+                                                withMathJax(),
+                                                includeMarkdown("Model_Info.Rmd")
+                                            )
+                                        )
+                               ),
+                               # ========= Model Fitting =============
+                               tabPanel(title = "Model Fit",
+                                        fluidPage(
+                                            h1("Model Fit"),
+                                            hr(),
+                                            fluidRow(
+                                                column(width = 4,
+                                                       box(title = strong("Model Settings"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                                           sliderTextInput(inputId = "data_split",
+                                                                           label = "Select proportion of data for training data set",
+                                                                           choices = seq(0, 1, by = 0.05),
+                                                                           selected = .8,
+                                                                           from_min = .5,
+                                                                           from_max = .95
+                                                           ),
+                                                           br(),
+                                                           pickerInput(inputId = "model_variables",
+                                                                       label = "Please select predictor variables",
+                                                                       choices = list(
+                                                                           "Season" = "season",
+                                                                           "Game Type" = "game_type",
+                                                                           "Weekday" = "weekday",
+                                                                           "Team" = "away_team",
+                                                                           "Overtime" = "overtime",
+                                                                           "Team Rest" = "away_rest",
+                                                                           "Spread Line" = "spread_line",
+                                                                           "Total Line" = "total_line",
+                                                                           "Total Odds" = "under_odds",
+                                                                           "Divsion Game" = "div_game",
+                                                                           "Stadium Type" = "roof",
+                                                                           "Field Surface" = "surface",
+                                                                           "Temperature" = "temp",
+                                                                           "Wind" = "wind"
+                                                                       ),
+                                                                       multiple = TRUE,
+                                                                       options = pickerOptions(actionsBox = TRUE, dropupAuto = TRUE)
+                                                           ),
+                                                           br(),
+                                                           sliderInput(inputId = "cross_validation_folds",
+                                                                       label = "Number of folds for cross validation to select model",
+                                                                       min = 3,
+                                                                       max = 10,
+                                                                       value = 5
+                                                           ),
+                                                           hr(),
+                                                           actionBttn(inputId = "fit_models",
+                                                                      label = "Fit models"
+                                                           ),
+                                                           br(),
+                                                           h6("Model fit may take a few minutes")
+                                                       )
+                                                ),
+                                                column(width = 8,
+                                                       box(title = strong("Model Statistics"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                                           h3("Training Data Fit Statistics"),
+                                                           DT::dataTableOutput("model_statistics"),
+                                                           br(),
+                                                           h3("Test Data Fit Statistics"),
+                                                           DT::dataTableOutput("test_statistics")
+                                                       )
+                                                )
+                                            )
+                                        )
+                               ),
+                               # ========= Prediction Tab ===============
+                               tabPanel(title = "Prediction",
+                                        fluidPage(
+                                            h1("Prediction"),
+                                            hr(),
+                                            fluidRow(
+                                                column(width = 4,
+                                                       box(title = strong("Prediction Inputs"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                                           radioGroupButtons(inputId = "prediction_model",
+                                                                             label = "Please select model for prediction",
+                                                                             choices = list(
+                                                                                 "Linear Regression" = "linear_regression",
+                                                                                 "Regression Tree" = "regression_tree",
+                                                                                 "Random Forest" = "random_forest"
+                                                                             ),
+                                                                             checkIcon = list(
+                                                                                 yes = icon("ok", lib = "glyphicon")
+                                                                             ),
+                                                                             direction = "vertical"
+                                                           ),
+                                                           br(),
+                                                           uiOutput("season_predictor"),
+                                                           uiOutput("game_type_predictor"),
+                                                           uiOutput("weekday_predictor"),
+                                                           uiOutput("team_predictor"),
+                                                           uiOutput("overtime_predictor"),
+                                                           uiOutput("rest_predictor"),
+                                                           uiOutput("spread_line_predictor"),
+                                                           uiOutput("total_line_predictor"),
+                                                           uiOutput("odds_predictor"),
+                                                           uiOutput("div_game_predictor"),
+                                                           uiOutput("roof_predictor"),
+                                                           uiOutput("surface_predictor"),
+                                                           uiOutput("temp_predictor"),
+                                                           uiOutput("wind_predictor"),
+                                                           hr(),
+                                                           actionBttn(inputId = "run_prediction",
+                                                                      label = "Generate prediction"
+                                                           )
+                                                       )
+                                                ),
+                                                column(width = 8,
+                                                       box(title = strong("Prediction Output"), width = 12, status = "warning", solidHeader = TRUE, collapsible = FALSE, closable = FALSE, elevation = 3,
+                                                           textOutput("prediction_value")
+                                                       )
+                                                )
+                                            )
+                                        ) # end fluid page
+                               ) # end tab Panel
+                           ) # end tabset
+                ) # end bs4TabItem
             ) # end bs4Tabitems
         ) # end bs4DashBody
     ) # bs4dashPage
 ) # end ShinyUI
+    
