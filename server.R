@@ -35,6 +35,14 @@ shinyServer(function(input, output, session) {
         )
     })
     
+    output$image <- renderImage({
+        filename <- normalizePath(file.path("nfl_logo.jpeg"))
+        list(src = filename,
+             width = 800,
+             height = 400,
+             align = "center")
+    })
+    
     # ========= Data Tab ===================
     game.df <- read.csv("games.csv")
     game.df <- as.data.frame(game.df)

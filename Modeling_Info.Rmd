@@ -1,6 +1,7 @@
 ---
 output: html_document
 ---
+
 ## Linear Regression Model
 Linear regression is a type of modeling used to predict a response based on explanatory variables by fitting a linear equation to observed data. For simple linear regression, using a single explanatory variable to predict a response variable, the equation is ${Y}_{i} = \beta_{0} + \beta_{1}{x}_{i} + {E}_{i}$ where ${Y}_{i}$ is the response for the ${i}^{th}$ observation, ${x}_{i}$ is the value of the explanatory variable for the ${i}^{th}$ observation, $\beta_{0}$ is the y-intercept, $\beta_{1}$ is the slope, and ${E}_{i}$ is the error for the ${i}^{th}$ observation. Fitting a linear model to the observed dataset requires estimating the coefficients $\beta$ such that the error term ${E}_{i} = {Y}_{i} - \beta_{0} - \beta_{1}{x}_{i}$ is minimized. The most common way to minimize this term is through least-squares where we minimize the sum of squared residuals through $min_{\beta_{0},\beta_{1}}\sum_{i=1}^n ({y}_{i} - \beta_{0} - \beta_{1}{x}_{i})$. Simple linear regression can be extended in many ways to include:  
   

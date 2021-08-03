@@ -49,6 +49,7 @@ shinyUI(
                            h1("Welcome to the NFL Game Dashboard", align  = "center"),
                            br(),
                            box(width = 12, closable = FALSE, collapsible = FALSE, headerBorder = FALSE,
+                               fluidRow(column(width = 12, align = "center", plotOutput("image"))),
                                withMathJax(),
                                includeMarkdown("Description.Rmd")
                            )
@@ -366,7 +367,7 @@ shinyUI(
                                             hr(),
                                             box(width = 12, closable = FALSE, collapsible = FALSE, headerBorder = FALSE,
                                                 withMathJax(),
-                                                includeMarkdown("Model_Info.Rmd")
+                                                includeMarkdown("Modeling_Info.Rmd")
                                             )
                                         )
                                ),
