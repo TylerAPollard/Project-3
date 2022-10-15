@@ -5,9 +5,9 @@ account: tylerapollard
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 7318038
-bundleId: 6406824
+bundleId: 6406831
 url: https://tylerapollard.shinyapps.io/NFL_Predictions/
-when: 1665872651.50563
-lastSyncTime: 1665872651.50564
+when: 1665873183.98294
+lastSyncTime: 1665873183.98295
 asMultiple: FALSE
 asStatic: FALSE

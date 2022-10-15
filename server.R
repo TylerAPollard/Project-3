@@ -19,6 +19,7 @@ library(knitr)
 library(DT)
 library(readr)
 library(plotly)
+library(data.table)
 
 ## The Different sections of code may be examined individually by condensing the chunk with the heart button on the left next to 
 ## the code line number
