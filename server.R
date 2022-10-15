@@ -41,31 +41,34 @@ shinyServer(function(input, output, session) {
              width = 800,
              height = 400,
              align = "center")
-    })
+    }, deleteFile = FALSE)
     
     # ========= Data Tab ===================
-    game.df <- read.csv("games.csv")
+    game.df <- read_csv("http://www.habitatring.com/games.csv")
     game.df <- as.data.frame(game.df)
+    game.df <- game.df %>% select(-c("old_game_id", "gsis", "nfl_detail_id", "pfr", "pff", "espn", "away_qb_id", "home_qb_id","stadium_id"))
     game.df$temp[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 72
     game.df$wind[game.df$roof == "dome" | game.df$roof == "closed" | game.df$roof == "open"] <- 0
     game.df <- game.df[complete.cases(game.df), ]
-    game.df$roof <- droplevels(game.df$roof)
+    #game.df3 <- game.df[!complete.cases(game.df), ]
+    game.df$roof <- as_factor(game.df$roof)
+    game.df$surface <- as_factor(game.df$surface)
     game.df$game_id <- as.character(game.df$game_id)
     game.df$gameday <- as.character(game.df$gameday)
     game.df$season <- as_factor(game.df$season)
     # levels(game.df$season) <- list("1999" = 1, "2000" = 2, "2001" = 3, "2002" = 4, "2003" = 5, "2004" = 6, "2005" = 7, "2006" = 8,
     #                                "2007" = 9, "2008" = 10, "2009" = 11, "2010" = 12, "2011" = 13, "2012" = 14, "2013" = 15, "2014" = 16,
     #                                "2015" = 17, "2016" = 18, "2017" = 19, "2018" = 20, "2019" = 21, "2020" = 22)
-    game.df$game_type <- relevel(game.df$game_type, "REG", "WC", "DIV", "CON", "SB")
-    game.df$gametime <- as.character(game.df$gametime)
-    game.df$away_qb_id <- as.character(game.df$away_qb_id)
-    game.df$home_qb_id <- as.character(game.df$home_qb_id)
+    game.df$game_type <- factor(game.df$game_type, levels = c("REG", "WC", "DIV", "CON", "SB"))
+    #game.df$gametime <- as.character(game.df$gametime)
+    #game.df$away_qb_id <- as.character(game.df$away_qb_id)
+    #game.df$home_qb_id <- as.character(game.df$home_qb_id)
     game.df$away_qb_name <- as.character(game.df$away_qb_name)
     game.df$home_qb_name <- as.character(game.df$home_qb_name)
     game.df$away_coach <- as.character(game.df$away_coach)
     game.df$home_coach <- as.character(game.df$home_coach)
     game.df$referee <- as.character(game.df$referee)
-    game.df$stadium_id <- as.character(game.df$stadium_id)
+    #game.df$stadium_id <- as.character(game.df$stadium_id)
     game.df$stadium <- as.character(game.df$stadium)
     game.df$div_game <- as_factor(game.df$div_game)
     game.df$overtime <- as_factor(game.df$overtime)
@@ -318,7 +321,12 @@ shinyServer(function(input, output, session) {
                 Maximum = max(summary.df[[i]],na.rm = TRUE),
                 `St. Dev.` = sd(summary.df[[i]],na.rm = TRUE)
             )
-            rownames(sum.table) <- i
+            rownames(sum.table) <- ifelse(i == "total", "Point Total",
+                                          ifelse(i == "total_line", "Total Line",
+                                                 ifelse(i == "result", "Point Differential",
+                                                        ifelse(i == "spread_line", "Spread Line", 
+                                                               ifelse(i == "temp", "Temperature",
+                                                                      ifelse(i == "wind", "Wind"))))))
             summary.table <- rbind(summary.table, sum.table)
         }
         

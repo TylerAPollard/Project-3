@@ -1,0 +1,13 @@
+name: NFL_Predictions
+title: NFL_Predictions
+username:
+account: tylerapollard
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7318038
+bundleId: 6406824
+url: https://tylerapollard.shinyapps.io/NFL_Predictions/
+when: 1665872651.50563
+lastSyncTime: 1665872651.50564
+asMultiple: FALSE
+asStatic: FALSE
